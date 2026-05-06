@@ -27,10 +27,19 @@ Saves ~2.7 GB RAM versus running 3 separate MCP process fleets.
 
 ## Steps
 
-### Step 1: Build
+### Step 1: Install
+
+**Option A — Install from npm (recommended, no clone needed):**
 
 ```bash
-cd /path/to/harshal-mcp-proxy
+npm install -g harshal-mcp-proxy
+```
+
+**Option B — Clone from source:**
+
+```bash
+gh repo clone HarshalRathore/harshal-mcp-proxy
+cd harshal-mcp-proxy
 npm install
 npm run build
 ```
@@ -40,7 +49,13 @@ npm run build
 Copy the example config and customize it:
 
 ```bash
-cp config.example.json ~/.config/harshal-mcp-proxy/config.json
+mkdir -p ~/.config/harshal-mcp-proxy
+
+# If installed from npm:
+cp $(npm root -g)/harshal-mcp-proxy/config.example.json ~/.config/harshal-mcp-proxy/config.json
+
+# If cloned from source:
+# cp config.example.json ~/.config/harshal-mcp-proxy/config.json
 ```
 
 Edit `~/.config/harshal-mcp-proxy/config.json`:
@@ -53,28 +68,20 @@ Edit `~/.config/harshal-mcp-proxy/config.json`:
 ```bash
 mkdir -p ~/.config/systemd/user
 
-cat > ~/.config/systemd/user/harshal-mcp-proxy.service << 'EOF'
-[Unit]
-Description=harshal-mcp-proxy daemon — shared MCP gateway
-After=network.target
+# If installed from npm, get the service file:
+cp $(npm root -g)/harshal-mcp-proxy/harshal-mcp-proxy.service ~/.config/systemd/user/
 
-[Service]
-Type=simple
-ExecStart=/usr/bin/node /ABSOLUTE/PATH/TO/harshal-mcp-proxy/dist/index.js --daemon /home/USERNAME/.config/harshal-mcp-proxy/config.json
-Restart=on-failure
-RestartSec=5
-Environment=NODE_ENV=production
-StandardOutput=journal
-StandardError=journal
+# If cloned from source:
+# cp harshal-mcp-proxy.service ~/.config/systemd/user/
 
-[Install]
-WantedBy=default.target
-EOF
-
-# Fix the ExecStart path to match actual location
+# Edit the service file to match your setup:
+# - For npm install: uncomment the "harshal-mcp-proxy --daemon" ExecStart line
+# - For source clone: set the full path to dist/index.js
+# Update the config path to your actual home directory:
+sed -i "s|/home/username/|$HOME/|" ~/.config/systemd/user/harshal-mcp-proxy.service
 ```
 
-Update the `ExecStart` path in the service file to match the actual installation directory.
+Enable and start the service:
 
 ```bash
 systemctl --user daemon-reload
@@ -155,5 +162,5 @@ ps aux | grep "npm exec" | grep -v grep | wc -l
 - **Cannot connect on port 8765**: Check if port is already in use with `lsof -i :8765`
 - **pi can't find tools**: Run `/mcp reconnect` in pi, or check `~/.pi/agent/mcp.json` exists
 - **VS Code shows no tools**: Restart VS Code after updating `.vscode/mcp.json`
-- **Fallback to stdio**: If daemon fails, run `node dist/index.js` directly for single-client mode
+- **Fallback to stdio**: If daemon fails, run `harshal-mcp-proxy` directly for single-client mode
 ````
