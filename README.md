@@ -135,22 +135,45 @@ integration, verification, and troubleshooting — all in one shot.
 
 ## Installation
 
-```bash
-# 1. Clone to your machine
-git clone <repo-url> /path/to/harshal-mcp-proxy
-cd /path/to/harshal-mcp-proxy
+### Option 1: Install from npm (recommended)
 
-# 2. Install dependencies
+```bash
+# Global install — binary available as `harshal-mcp-proxy` in PATH
+npm install -g harshal-mcp-proxy
+
+# Or run directly without installing:
+npx harshal-mcp-proxy
+
+# Create config from template (EDIT THIS with your values)
+mkdir -p ~/.config/harshal-mcp-proxy
+cp $(npm root -g)/harshal-mcp-proxy/config.example.json ~/.config/harshal-mcp-proxy/config.json
+# ⚠️ Edit ~/.config/harshal-mcp-proxy/config.json with your API keys and paths
+
+# Verify it works (stdio mode)
+harshal-mcp-proxy
+# Should print: harshal-mcp-proxy starting (stdio)...
+# Then: __MCP_GATEWAY_STDIO_READY__
+# Ctrl+C to stop
+```
+
+### Option 2: Clone from source
+
+```bash
+# Clone the repo
+gh repo clone HarshalRathore/harshal-mcp-proxy
+cd harshal-mcp-proxy
+
+# Install dependencies
 npm install
 
-# 3. Build
+# Build
 npm run build
 
-# 4. Create config from template (EDIT THIS with your values)
+# Create config from template (EDIT THIS with your values)
 cp config.example.json ~/.config/harshal-mcp-proxy/config.json
 # ⚠️ Edit ~/.config/harshal-mcp-proxy/config.json with your API keys and paths
 
-# 5. Verify it works (stdio mode)
+# Verify it works (stdio mode)
 node dist/index.js
 # Should print: harshal-mcp-proxy starting (stdio)...
 # Then: __MCP_GATEWAY_STDIO_READY__
@@ -168,31 +191,25 @@ that all your AI clients connect to remotely.
 
 ### Step 1: Install the systemd unit
 
-Copy the service file to your user systemd directory:
+The `.service` file ships with the package. Copy it to your user systemd directory:
 
 ```bash
 mkdir -p ~/.config/systemd/user
-cp harshal-mcp-proxy.service ~/.config/systemd/user/
-# OR create it manually:
-cat > ~/.config/systemd/user/harshal-mcp-proxy.service << 'SERVICEEOF'
-[Unit]
-Description=harshal-mcp-proxy daemon — shared MCP gateway
-Documentation=https://github.com/your-org/harshal-mcp-proxy
-After=network.target
 
-[Service]
-Type=simple
-ExecStart=/usr/bin/node /path/to/harshal-mcp-proxy/dist/index.js --daemon /home/your-user/.config/harshal-mcp-proxy/config.json
-Restart=on-failure
-RestartSec=5
-Environment=NODE_ENV=production
-StandardOutput=journal
-StandardError=journal
+# If installed from npm:
+cp $(npm root -g)/harshal-mcp-proxy/harshal-mcp-proxy.service ~/.config/systemd/user/
 
-[Install]
-WantedBy=default.target
-SERVICEEOF
+# If cloned from source:
+# cp harshal-mcp-proxy.service ~/.config/systemd/user/
+
+# Edit the path in the service file to match your setup:
+sed -i "s|/home/username/|$HOME/|" ~/.config/systemd/user/harshal-mcp-proxy.service
+# If using npm global install, the binary is already in PATH — just uncomment the right line
 ```
+
+The service file supports two modes (edit it to choose one):
+- **npm global install**: `ExecStart=harshal-mcp-proxy --daemon` (binary in PATH)
+- **Source clone**: `ExecStart=/usr/bin/node /path/to/dist/index.js --daemon`
 
 ### Step 2: Enable and start
 

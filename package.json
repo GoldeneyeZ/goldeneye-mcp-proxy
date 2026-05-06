@@ -1,15 +1,61 @@
 {
   "name": "harshal-mcp-proxy",
   "version": "1.0.0",
-  "description": "Custom MCP gateway with schema deferral + response shielding. Combines mcp-gateway's search→describe→invoke pattern with tldr's response truncation and result store.",
+  "description": "MCP gateway with schema deferral + response shielding. Replaces 12+ MCP servers with 6 tools, saves ~99% context tokens and ~2.7GB RAM via shared HTTP daemon mode.",
   "type": "module",
-  "bin": {
-    "harshal-mcp-proxy": "./dist/index.js"
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
+  "bin": {
+    "harshal-mcp-proxy": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "SETUP_PROMPT.md",
+    "config.example.json",
+    "harshal-mcp-proxy.service",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "dev": "node --loader ts-node/esm src/index.ts",
     "start": "node dist/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HarshalRathore/harshal-mcp-proxy.git"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "gateway",
+    "proxy",
+    "ai",
+    "coding-agent",
+    "schema-deferral",
+    "response-shielding",
+    "claude",
+    "pi",
+    "opencode"
+  ],
+  "author": "Harshal Rathore",
+  "license": "MIT",
+  "homepage": "https://github.com/HarshalRathore/harshal-mcp-proxy#readme",
+  "bugs": {
+    "url": "https://github.com/HarshalRathore/harshal-mcp-proxy/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.10.1",
