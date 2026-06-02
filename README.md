@@ -1,4 +1,4 @@
-# harshal-mcp-proxy
+# goldeneye-mcp-proxy
 
 Custom MCP gateway that sits between your AI clients (pi, VS Code, opencode) and your
 upstream MCP servers. Combines **schema deferral** (from
@@ -41,11 +41,11 @@ complete set of MCP server processes. With 12+ MCP servers in your config, this 
 
 ```
 ┌──────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│  pi session 1│────►│  harshal-mcp-    │────►│  12 MCP servers  │
+│  pi session 1│────►│  goldeneye-mcp-    │────►│  12 MCP servers  │
 │              │     │  proxy (stdio)   │     │  (1.3 GB)        │
 ├──────────────┤     └──────────────────┘     └──────────────────┘
 │  pi session 2│────►┌──────────────────┐     ┌──────────────────┐
-│              │     │  harshal-mcp-    │────►│  12 MCP servers  │
+│              │     │  goldeneye-mcp-    │────►│  12 MCP servers  │
 ├──────────────┤     │  proxy (stdio)   │     │  (1.3 GB)        │
 │  VS Code     │────►└──────────────────┘     └──────────────────┘
 └──────────────┘                               ┌──────────────────┐
@@ -61,9 +61,9 @@ With the shared daemon:
 ```
 ┌──────────────┐     ┌────────────────────────┐     ┌──────────────────┐
 │  pi session 1│────►│                        │     │                  │
-├──────────────┤     │  harshal-mcp-proxy     │────►│  12 MCP servers  │
+├──────────────┤     │  goldeneye-mcp-proxy     │────►│  12 MCP servers  │
 │  pi session 2│────►│  daemon (HTTP port     │     │  (1.3 GB)        │
-├──────────────┤     │  8765)                 │     │     ONE SET      │
+├──────────────┤     │  8767)                 │     │     ONE SET      │
 │  VS Code     │────►│                        │     │                  │
 └──────────────┘     └────────────────────────┘     └──────────────────┘
 ```
@@ -90,7 +90,7 @@ One proxy daemon serves all clients over HTTP. Uses MCP Streamable HTTP transpor
 ```bash
 node dist/index.js --daemon
 # or with custom port:
-node dist/index.js --port 8765
+node dist/index.js --port 8767
 ```
 
 ### Mode 3: Catalog Discovery (snapshot builder)
@@ -103,7 +103,7 @@ node dist/index.js --discover
 # Connects to ALL servers, fetches tool schemas, saves snapshots to disk, then exits
 ```
 
-Catalog snapshots are stored in `~/.cache/harshal-mcp-proxy/catalogs/`.
+Catalog snapshots are stored in `~/.cache/goldeneye-mcp-proxy/catalogs/`.
 
 ---
 
@@ -152,7 +152,7 @@ one shot.
 
 ### For existing installations: Teach Your Agent
 
-If you already have harshal-mcp-proxy running but your agent doesn't know how to
+If you already have goldeneye-mcp-proxy running but your agent doesn't know how to
 call the gateway tools, use the [AGENT-CONTEXT.md](./AGENT-CONTEXT.md) file:
 
 ```bash
@@ -181,20 +181,20 @@ Then reference it in your agent's startup config (e.g., `.pi/APPEND_SYSTEM.md`,
 ### Option 1: Install from npm (recommended)
 
 ```bash
-# Global install — binary available as `harshal-mcp-proxy` in PATH
-npm install -g harshal-mcp-proxy
+# Global install — binary available as `goldeneye-mcp-proxy` in PATH
+npm install -g goldeneye-mcp-proxy
 
 # Or run directly without installing:
-npx harshal-mcp-proxy
+npx goldeneye-mcp-proxy
 
 # Create config from template (EDIT THIS with your values)
-mkdir -p ~/.config/harshal-mcp-proxy
-cp $(npm root -g)/harshal-mcp-proxy/config.example.json ~/.config/harshal-mcp-proxy/config.json
-# ⚠️ Edit ~/.config/harshal-mcp-proxy/config.json with your API keys and paths
+mkdir -p ~/.config/goldeneye-mcp-proxy
+cp $(npm root -g)/goldeneye-mcp-proxy/config.example.json ~/.config/goldeneye-mcp-proxy/config.json
+# ⚠️ Edit ~/.config/goldeneye-mcp-proxy/config.json with your API keys and paths
 
 # Verify it works (stdio mode)
-harshal-mcp-proxy
-# Should print: harshal-mcp-proxy starting (stdio)...
+goldeneye-mcp-proxy
+# Should print: goldeneye-mcp-proxy starting (stdio)...
 # Then: __MCP_GATEWAY_STDIO_READY__
 # Ctrl+C to stop
 ```
@@ -203,8 +203,8 @@ harshal-mcp-proxy
 
 ```bash
 # Clone the repo
-gh repo clone HarshalRathore/harshal-mcp-proxy
-cd harshal-mcp-proxy
+gh repo clone goldeneyeRathore/goldeneye-mcp-proxy
+cd goldeneye-mcp-proxy
 
 # Install dependencies
 npm install
@@ -213,12 +213,12 @@ npm install
 npm run build
 
 # Create config from template (EDIT THIS with your values)
-cp config.example.json ~/.config/harshal-mcp-proxy/config.json
-# ⚠️ Edit ~/.config/harshal-mcp-proxy/config.json with your API keys and paths
+cp config.example.json ~/.config/goldeneye-mcp-proxy/config.json
+# ⚠️ Edit ~/.config/goldeneye-mcp-proxy/config.json with your API keys and paths
 
 # Verify it works (stdio mode)
 node dist/index.js
-# Should print: harshal-mcp-proxy starting (stdio)...
+# Should print: goldeneye-mcp-proxy starting (stdio)...
 # Then: __MCP_GATEWAY_STDIO_READY__
 # Ctrl+C to stop
 ```
@@ -240,42 +240,42 @@ The `.service` file ships with the package. Copy it to your user systemd directo
 mkdir -p ~/.config/systemd/user
 
 # If installed from npm:
-cp $(npm root -g)/harshal-mcp-proxy/harshal-mcp-proxy.service ~/.config/systemd/user/
+cp $(npm root -g)/goldeneye-mcp-proxy/goldeneye-mcp-proxy.service ~/.config/systemd/user/
 
 # If cloned from source:
-# cp harshal-mcp-proxy.service ~/.config/systemd/user/
+# cp goldeneye-mcp-proxy.service ~/.config/systemd/user/
 
 # Edit the path in the service file to match your setup:
-sed -i "s|/home/username/|$HOME/|" ~/.config/systemd/user/harshal-mcp-proxy.service
+sed -i "s|/home/username/|$HOME/|" ~/.config/systemd/user/goldeneye-mcp-proxy.service
 # If using npm global install, the binary is already in PATH — just uncomment the right line
 ```
 
 The service file supports two modes (edit it to choose one):
-- **npm global install**: `ExecStart=harshal-mcp-proxy --daemon` (binary in PATH)
+- **npm global install**: `ExecStart=goldeneye-mcp-proxy --daemon` (binary in PATH)
 - **Source clone**: `ExecStart=/usr/bin/node /path/to/dist/index.js --daemon`
 
 ### Step 2: Enable and start
 
 ```bash
 systemctl --user daemon-reload
-systemctl --user enable harshal-mcp-proxy   # auto-start at boot
-systemctl --user start harshal-mcp-proxy    # start now
-systemctl --user status harshal-mcp-proxy   # verify
+systemctl --user enable goldeneye-mcp-proxy   # auto-start at boot
+systemctl --user start goldeneye-mcp-proxy    # start now
+systemctl --user status goldeneye-mcp-proxy   # verify
 ```
 
 ### Step 3: Verify
 
 ```bash
 # Health check
-curl http://localhost:8765/health
+curl http://localhost:8767/health
 
 # MCP initialize
-curl -X POST http://localhost:8765/mcp \
+curl -X POST http://localhost:8767/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 
 # List tools
-curl -X POST http://localhost:8765/mcp \
+curl -X POST http://localhost:8767/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
 ```
@@ -283,10 +283,10 @@ curl -X POST http://localhost:8765/mcp \
 ### Step 4: Manage the service
 
 ```bash
-systemctl --user stop harshal-mcp-proxy     # stop daemon
-systemctl --user restart harshal-mcp-proxy  # restart
-systemctl --user disable harshal-mcp-proxy  # disable auto-start
-journalctl --user -u harshal-mcp-proxy -f   # follow logs
+systemctl --user stop goldeneye-mcp-proxy     # stop daemon
+systemctl --user restart goldeneye-mcp-proxy  # restart
+systemctl --user disable goldeneye-mcp-proxy  # disable auto-start
+journalctl --user -u goldeneye-mcp-proxy -f   # follow logs
 ```
 
 ---
@@ -300,8 +300,8 @@ Create or update `~/.pi/agent/mcp.json` (global) or `<project>/.pi/mcp.json` (pr
 ```json
 {
   "mcpServers": {
-    "harshal-mcp-proxy": {
-      "url": "http://localhost:8765/mcp",
+    "goldeneye-mcp-proxy": {
+      "url": "http://localhost:8767/mcp",
       "description": "Shared MCP gateway — search, describe, invoke access to all tools"
     }
   }
@@ -317,9 +317,9 @@ Update `<project>/.vscode/mcp.json` (project-level) or `~/.config/Code/User/mcp.
 ```json
 {
   "servers": {
-    "harshal-mcp-proxy": {
+    "goldeneye-mcp-proxy": {
       "type": "streamableHttp",
-      "url": "http://localhost:8765/mcp",
+      "url": "http://localhost:8767/mcp",
       "description": "Shared MCP gateway — provides search, describe, and invoke access to all tools"
     }
   }
@@ -336,9 +336,9 @@ Update `opencode.json`:
 ```jsonc
 {
   "mcp": {
-    "harshal-mcp-proxy": {
+    "goldeneye-mcp-proxy": {
       "type": "remote",
-      "url": "http://localhost:8765/mcp",
+      "url": "http://localhost:8767/mcp",
       "transport": "streamable_http"
     }
   }
@@ -353,7 +353,7 @@ Update `opencode.json`:
 
 ```
 ┌──────────────┐     stdio      ┌──────────────────────────┐
-│  AI Client   │ ──────────── → │   harshal-mcp-proxy      │
+│  AI Client   │ ──────────── → │   goldeneye-mcp-proxy      │
 │  (sees 6     │ ← ──────────  │                          │
 │   tools)     │                │  ┌──────────────────┐    │
 └──────────────┘                │  │  SearchEngine     │    │  ← BM25 index
@@ -374,8 +374,8 @@ Update `opencode.json`:
 ```
 ┌──────────────┐    HTTP POST    ┌──────────────────────────┐
 │  pi #1       │ ──────────────► │                          │
-├──────────────┤                 │  harshal-mcp-proxy       │
-│  pi #2       │ ──────────────► │  daemon (port 8765)      │
+├──────────────┤                 │  goldeneye-mcp-proxy       │
+│  pi #2       │ ──────────────► │  daemon (port 8767)      │
 ├──────────────┤                 │                          │
 │  VS Code     │ ──────────────► │  ┌──────────────────┐    │
 ├──────────────┤                 │  │  JSON-RPC 2.0    │    │
@@ -407,19 +407,19 @@ No duplicate npm exec, no wasted RAM.
 
 ```bash
 # Build the proxy if not already built
-cd /path/to/harshal-mcp-proxy && npm run build
+cd /path/to/goldeneye-mcp-proxy && npm run build
 
 # Enable and start the daemon
 systemctl --user daemon-reload
-systemctl --user enable harshal-mcp-proxy
-systemctl --user start harshal-mcp-proxy
+systemctl --user enable goldeneye-mcp-proxy
+systemctl --user start goldeneye-mcp-proxy
 ```
 
 **2. Update your clients:**
 
 | Client | Config file | Change |
 |--------|-------------|--------|
-| pi | `~/.pi/agent/mcp.json` or `<project>/.pi/mcp.json` | Set `url` to `http://localhost:8765/mcp` |
+| pi | `~/.pi/agent/mcp.json` or `<project>/.pi/mcp.json` | Set `url` to `http://localhost:8767/mcp` |
 | VS Code | `<project>/.vscode/mcp.json` | Set `type: "streamableHttp"` + `url` |
 | opencode | `opencode.json` | Set `type: "remote"` + `url` |
 
@@ -427,7 +427,7 @@ systemctl --user start harshal-mcp-proxy
 
 Delete entries that used `type: "local"` with individual `command` arrays for each
 MCP server (e.g., playwright, shadcn, neo4j, searxng, etc.). The daemon manages all
-upstream servers via its own `~/.config/harshal-mcp-proxy/config.json`.
+upstream servers via its own `~/.config/goldeneye-mcp-proxy/config.json`.
 
 **4. Reload / restart clients:**
 
@@ -439,7 +439,7 @@ upstream servers via its own `~/.config/harshal-mcp-proxy/config.json`.
 
 Check the daemon health:
 ```bash
-curl http://localhost:8765/health
+curl http://localhost:8767/health
 # Expected: {"status":"ok","servers":12,"tools":130,...}
 ```
 
@@ -452,7 +452,7 @@ ps aux | grep "npm exec" | grep -v grep | wc -l
 
 ### Configuration Hot-Reload
 
-The daemon watches `~/.config/harshal-mcp-proxy/config.json` for changes, just like the
+The daemon watches `~/.config/goldeneye-mcp-proxy/config.json` for changes, just like the
 stdio mode. When you edit it:
 
 - New servers are connected automatically
@@ -466,7 +466,7 @@ No restart needed.
 
 ## Config File
 
-`~/.config/harshal-mcp-proxy/config.json` defines all upstream MCP servers.
+`~/.config/goldeneye-mcp-proxy/config.json` defines all upstream MCP servers.
 
 The `lazy` field controls on-demand loading per server. When enabled, the server
 process is NOT started at boot — tool schemas are loaded from a cached snapshot.
@@ -549,7 +549,7 @@ node dist/index.js --discover
 ```
 
 This connects to ALL servers, fetches tool schemas, saves them to
-`~/.cache/harshal-mcp-proxy/catalogs/<server>.json`, then exits.
+`~/.cache/goldeneye-mcp-proxy/catalogs/<server>.json`, then exits.
 After that, the daemon can load schemas from disk without spawning processes.
 
 Environment variable substitution (`{env:VAR_NAME}`) is supported in environment fields.
@@ -671,7 +671,7 @@ If a server exceeds the limit, it's force-disconnected regardless of idle time.
 When a server connects (eagerly or on-demand), its tool schemas are saved to disk:
 
 ```
-~/.cache/harshal-mcp-proxy/catalogs/
+~/.cache/goldeneye-mcp-proxy/catalogs/
 ├── repeato-backend-mcp-server.json   # 51 tools
 ├── neo4j-cypher.json                 # 3 tools
 ├── playwright.json                   # 23 tools
@@ -695,7 +695,7 @@ spawning a single process. They're refreshed each time a server reconnects.
 ## Files
 
 ```
-harshal-mcp-proxy/
+goldeneye-mcp-proxy/
 ├── src/
 │   ├── index.ts              # Entry point — stdio, HTTP daemon, or --discover
 │   ├── gateway.ts            # Orchestrator — wires everything together
@@ -712,7 +712,7 @@ harshal-mcp-proxy/
 │   ├── catalog-snapshot.ts   # Disk-based tool schema snapshots
 │   └── resource-monitor.ts   # PID discovery + RSS polling
 ├── dist/                  # Compiled JS output
-├── harshal-mcp-proxy.service  # Systemd user service unit
+├── goldeneye-mcp-proxy.service  # Systemd user service unit
 ├── config.json            # Default upstream server config
 ├── README.md              # This file
 ├── AGENT-CONTEXT.md       # Teach any LLM how to call the gateway
@@ -723,7 +723,7 @@ harshal-mcp-proxy/
 
 ## Differences from mcp-gateway and tldr
 
-| Feature | mcp-gateway | tldr | harshal-mcp-proxy |
+| Feature | mcp-gateway | tldr | goldeneye-mcp-proxy |
 |---------|------------|------|-------------------|
 | Schema deferral (search→describe→invoke) | ✅ | ✅ | ✅ |
 | Response shielding (truncation) | ❌ | ✅ | ✅ |

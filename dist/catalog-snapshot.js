@@ -8,7 +8,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, readdirSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-const DEFAULT_SNAPSHOT_DIR = join(homedir(), ".cache", "harshal-mcp-proxy", "catalogs");
+const DEFAULT_SNAPSHOT_DIR = join(homedir(), ".cache", "goldeneye-mcp-proxy", "catalogs");
 export class CatalogSnapshotManager {
     snapshotDir;
     constructor(snapshotDir) {

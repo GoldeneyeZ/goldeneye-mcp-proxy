@@ -30,7 +30,7 @@ import { z } from "zod";
  * @returns Configured McpServer ready to connect to a transport
  */
 export function createServer(searchEngine, connections, jobManager, responseStore, responseShield, projectRegistry, statusHolder) {
-    const server = new McpServer({ name: "harshal-mcp-proxy", version: "1.0.0" }, { capabilities: { tools: {} } });
+    const server = new McpServer({ name: "goldeneye-mcp-proxy", version: "1.0.0" }, { capabilities: { tools: {} } });
     // ─────────────────────────────────────────
     // Tool 1: gateway.search
     // ─────────────────────────────────────────

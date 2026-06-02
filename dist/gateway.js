@@ -186,7 +186,7 @@ export class MCPGateway {
      * so the gateway starts fast even if upstream servers are slow.
      */
     async startWithStdio() {
-        console.error("harshal-mcp-proxy starting (stdio)...");
+        console.error("goldeneye-mcp-proxy starting (stdio)...");
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
         // Signal to opencode that we're ready to receive requests

@@ -1,5 +1,5 @@
 {
-  "name": "harshal-mcp-proxy",
+  "name": "goldeneye-mcp-proxy",
   "version": "1.0.0",
   "description": "MCP gateway with schema deferral + response shielding. Replaces 12+ MCP servers with 6 tools, saves ~99% context tokens and ~2.7GB RAM via shared HTTP daemon mode.",
   "type": "module",
@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "harshal-mcp-proxy": "dist/index.js"
+    "goldeneye-mcp-proxy": "dist/index.js"
   },
   "files": [
     "dist/",
@@ -20,7 +20,7 @@
     "SETUP_PROMPT.md",
     "AGENT-CONTEXT.md",
     "config.example.json",
-    "harshal-mcp-proxy.service",
+    "goldeneye-mcp-proxy.service",
     "LICENSE"
   ],
   "scripts": {
@@ -34,7 +34,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HarshalRathore/harshal-mcp-proxy.git"
+    "url": "git+https://github.com/goldeneyeRathore/goldeneye-mcp-proxy.git"
   },
   "keywords": [
     "mcp",
@@ -49,11 +49,11 @@
     "pi",
     "opencode"
   ],
-  "author": "Harshal Rathore",
+  "author": "goldeneye Rathore",
   "license": "MIT",
-  "homepage": "https://github.com/HarshalRathore/harshal-mcp-proxy#readme",
+  "homepage": "https://github.com/goldeneyeRathore/goldeneye-mcp-proxy#readme",
   "bugs": {
-    "url": "https://github.com/HarshalRathore/harshal-mcp-proxy/issues"
+    "url": "https://github.com/goldeneyeRathore/goldeneye-mcp-proxy/issues"
   },
   "publishConfig": {
     "access": "public"

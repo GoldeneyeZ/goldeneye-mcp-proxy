@@ -137,7 +137,7 @@ export class ConnectionManager {
                 return;
             console.error(`  [${serverKey}] Error: ${error.message}`);
         };
-        const client = new Client({ name: `harshal-proxy-${serverKey}`, version: "1.0.0" }, {});
+        const client = new Client({ name: `goldeneye-proxy-${serverKey}`, version: "1.0.0" }, {});
         await client.connect(transport);
         this.upstreams.set(serverKey, client);
         // Set state to connected

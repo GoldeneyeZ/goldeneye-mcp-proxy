@@ -1,7 +1,7 @@
 /**
- * http-server.ts — HTTP daemon mode for harshal-mcp-proxy.
+ * http-server.ts — HTTP daemon mode for goldeneye-mcp-proxy.
  *
- * When started with --port (or --daemon), harshal-mcp-proxy binds to
+ * When started with --port (or --daemon), goldeneye-mcp-proxy binds to
  * an HTTP port and speaks MCP's Streamable HTTP transport (JSON-RPC 2.0).
  *
  * This lets multiple clients (pi sessions, VS Code) share ONE set of
@@ -189,7 +189,7 @@ export class HttpMcpServer {
     private statusHolder?: StatusHolder,
     port?: number,
   ) {
-    this.port = port || 8765;
+    this.port = port || 8767;
   }
 
   async start(): Promise<void> {
@@ -279,6 +279,12 @@ export class HttpMcpServer {
 
       try {
         const response = await this.processRequest(request);
+        if (!response) {
+          res.writeHead(202);
+          res.end();
+          return;
+        }
+
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(response));
       } catch (err) {
@@ -289,7 +295,7 @@ export class HttpMcpServer {
     });
   }
 
-  private async processRequest(request: JsonRpcRequest): Promise<JsonRpcResponse> {
+  private async processRequest(request: JsonRpcRequest): Promise<JsonRpcResponse | undefined> {
     const id = request.id ?? null;
     const { method, params } = request;
 
@@ -299,11 +305,10 @@ export class HttpMcpServer {
 
       case "notifications/initialized":
         this.initialized = true;
-        return jsonRpcSuccess(id, {});
+        return undefined;
 
       case "notifications/cancelled":
-        // No-op, just acknowledge
-        return jsonRpcSuccess(id, {});
+        return undefined;
 
       case "ping":
         return jsonRpcSuccess(id, {});
@@ -326,7 +331,7 @@ export class HttpMcpServer {
         tools: {},
       },
       serverInfo: {
-        name: "harshal-mcp-proxy",
+        name: "goldeneye-mcp-proxy",
         version: "1.0.0",
       },
     });

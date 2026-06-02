@@ -4,7 +4,7 @@
  * Reads the gateway config from:
  *   1. CLI arg (process.argv[2])
  *   2. MCP_GATEWAY_CONFIG env var
- *   3. ~/.config/harshal-mcp-proxy/config.json (default)
+ *   3. ~/.config/goldeneye-mcp-proxy/config.json (default)
  *
  * Supports {env:VAR_NAME} substitution in environment fields.
  * Watches the config file for changes and fires a callback on reload.
@@ -13,7 +13,7 @@ import { readFileSync, existsSync, watch, mkdirSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import { join, dirname } from "path";
 /** Default config location following XDG conventions */
-const DEFAULT_CONFIG_PATH = join(homedir(), ".config", "harshal-mcp-proxy", "config.json");
+const DEFAULT_CONFIG_PATH = join(homedir(), ".config", "goldeneye-mcp-proxy", "config.json");
 export class Config {
     config;
     configPath;

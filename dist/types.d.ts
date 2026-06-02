@@ -1,5 +1,5 @@
 /**
- * types.ts — All interfaces for harshal-mcp-proxy.
+ * types.ts — All interfaces for goldeneye-mcp-proxy.
  *
  * ┌─────────────────────────────────────────────────────────────────┐
  * │  Three layers of types:                                        │

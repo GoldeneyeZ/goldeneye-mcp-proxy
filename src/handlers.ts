@@ -46,7 +46,7 @@ export function createServer(
   statusHolder?: StatusHolder
 ): McpServer {
   const server = new McpServer(
-    { name: "harshal-mcp-proxy", version: "1.0.0" },
+    { name: "goldeneye-mcp-proxy", version: "1.0.0" },
     { capabilities: { tools: {} } }
   );
 

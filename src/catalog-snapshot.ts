@@ -11,7 +11,7 @@ import { homedir } from "os";
 import { join } from "path";
 import type { ToolCatalogEntry } from "./types.js";
 
-const DEFAULT_SNAPSHOT_DIR = join(homedir(), ".cache", "harshal-mcp-proxy", "catalogs");
+const DEFAULT_SNAPSHOT_DIR = join(homedir(), ".cache", "goldeneye-mcp-proxy", "catalogs");
 
 export interface SnapshotData {
   serverKey: string;

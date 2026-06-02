@@ -4,7 +4,7 @@
  * Reads the gateway config from:
  *   1. CLI arg (process.argv[2])
  *   2. MCP_GATEWAY_CONFIG env var
- *   3. ~/.config/harshal-mcp-proxy/config.json (default)
+ *   3. ~/.config/goldeneye-mcp-proxy/config.json (default)
  *
  * Supports {env:VAR_NAME} substitution in environment fields.
  * Watches the config file for changes and fires a callback on reload.

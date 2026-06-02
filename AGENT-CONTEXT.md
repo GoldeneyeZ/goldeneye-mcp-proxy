@@ -1,4 +1,4 @@
-# harshal-mcp-proxy — Agent Context for LLMs
+# goldeneye-mcp-proxy — Agent Context for LLMs
 
 Copy this file into your AI coding agent's project (or feed it directly) so it
 understands how to discover, describe, and invoke tools through the gateway.
@@ -15,7 +15,7 @@ understands how to discover, describe, and invoke tools through the gateway.
 
 ## What Is This?
 
-harshal-mcp-proxy is a shared MCP gateway that sits between AI coding agents and
+goldeneye-mcp-proxy is a shared MCP gateway that sits between AI coding agents and
 upstream MCP servers. Instead of your agent connecting to 12+ individual MCP servers
 (each with its own tool schemas, processes, and RAM usage), it connects to **6 gateway
 tools** via a single MCP connection.
@@ -39,11 +39,11 @@ to connect to it like any other MCP server.
 
 | Agent | Config | Mode |
 |-------|--------|------|
-| **Pi** | `mcp.json` → `url: "http://localhost:8765/mcp"` | Streamable HTTP |
+| **Pi** | `mcp.json` → `url: "http://localhost:8767/mcp"` | Streamable HTTP |
 | **Claude Code / Opencode** | `opencode.json` → `type: "remote"`, `transport: "streamable_http"` | Remote HTTP |
 | **VS Code (Cline, Continue)** | `.vscode/mcp.json` → `type: "streamableHttp"`, `url` | Streamable HTTP |
 | **Cursor** | `.cursor/mcp.json` → `type: "streamableHttp"` | Streamable HTTP |
-| **Any stdio-compatible** | Run `harshal-mcp-proxy` as a subprocess | Stdio |
+| **Any stdio-compatible** | Run `goldeneye-mcp-proxy` as a subprocess | Stdio |
 
 **Important:** Replace ALL individual MCP server entries in your agent config with
 **just this one entry**. The proxy manages all upstream servers internally.
@@ -265,7 +265,7 @@ server within the idle window are fast.
    - Some expect `gateway.invoke` as a function call
    - Some expect JSON-RPC directly
    - Some use `mcp()` wrapper with tool namespacing
-   - Try: `gateway.invoke`, `mcp.invoke`, `harshal_mcp_proxy_gateway.invoke`, etc.
+   - Try: `gateway.invoke`, `mcp.invoke`, `goldeneye_mcp_proxy_gateway.invoke`, etc.
 
 4. **Once you find the correct call pattern**, create or update a rules file for your
    agent framework so future sessions don't have to rediscover it:

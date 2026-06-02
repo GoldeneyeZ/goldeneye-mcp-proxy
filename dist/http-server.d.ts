@@ -1,7 +1,7 @@
 /**
- * http-server.ts — HTTP daemon mode for harshal-mcp-proxy.
+ * http-server.ts — HTTP daemon mode for goldeneye-mcp-proxy.
  *
- * When started with --port (or --daemon), harshal-mcp-proxy binds to
+ * When started with --port (or --daemon), goldeneye-mcp-proxy binds to
  * an HTTP port and speaks MCP's Streamable HTTP transport (JSON-RPC 2.0).
  *
  * This lets multiple clients (pi sessions, VS Code) share ONE set of

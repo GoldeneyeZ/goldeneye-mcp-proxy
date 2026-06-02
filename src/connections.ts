@@ -164,7 +164,7 @@ export class ConnectionManager {
     };
 
     const client = new Client(
-      { name: `harshal-proxy-${serverKey}`, version: "1.0.0" },
+      { name: `goldeneye-proxy-${serverKey}`, version: "1.0.0" },
       {}
     );
 

@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * index.ts — Entry point for harshal-mcp-proxy.
+ * index.ts — Entry point for goldeneye-mcp-proxy.
  *
  * Usage:
  *   node dist/index.js [path-to-config.json]          (stdio mode, default)
- *   node dist/index.js --port 8765 [path-to-config.json]  (HTTP daemon mode)
- *   node dist/index.js --daemon [path-to-config.json]     (alias for --port 8765)
+ *   node dist/index.js --port 8767 [path-to-config.json]  (HTTP daemon mode)
+ *   node dist/index.js --daemon [path-to-config.json]     (alias for --port 8767)
  *
  * If no config path is provided, reads from:
  *   1. MCP_GATEWAY_CONFIG env var
- *   2. ~/.config/harshal-mcp-proxy/config.json
+ *   2. ~/.config/goldeneye-mcp-proxy/config.json
  *
  * Stdio mode (for backwards compatibility):
  *   The gateway speaks MCP over stdin/stdout.

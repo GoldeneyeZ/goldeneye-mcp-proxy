@@ -1,23 +1,23 @@
 [Unit]
-Description=harshal-mcp-proxy daemon — shared MCP gateway for AI coding agents
-Documentation=https://github.com/HarshalRathore/harshal-mcp-proxy
+Description=goldeneye-mcp-proxy daemon — shared MCP gateway for AI coding agents
+Documentation=https://github.com/goldeneyeRathore/goldeneye-mcp-proxy
 After=network.target
 
 [Service]
 Type=simple
 # ───────────────────────────────────────────────────────────────────
 # OPTION A — Installed from npm (recommended):
-#   npm install -g harshal-mcp-proxy
+#   npm install -g goldeneye-mcp-proxy
 #   Then the binary is available in your PATH:
 #
-#   ExecStart=harshal-mcp-proxy --daemon /home/username/.config/harshal-mcp-proxy/config.json
+#   ExecStart=goldeneye-mcp-proxy --daemon /home/username/.config/goldeneye-mcp-proxy/config.json
 #
 # OPTION B — Cloned repo (replace paths with your actual install dir):
 #
-#   ExecStart=/usr/bin/node /path/to/harshal-mcp-proxy/dist/index.js --daemon /home/username/.config/harshal-mcp-proxy/config.json
+#   ExecStart=/usr/bin/node /path/to/goldeneye-mcp-proxy/dist/index.js --daemon /home/username/.config/goldeneye-mcp-proxy/config.json
 #
 # ───────────────────────────────────────────────────────────────────
-ExecStart=harshal-mcp-proxy --daemon /home/username/.config/harshal-mcp-proxy/config.json
+ExecStart=/usr/bin/node /path/to/goldeneye-mcp-proxy/dist/index.js --daemon /home/username/.config/goldeneye-mcp-proxy/config.json
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production
