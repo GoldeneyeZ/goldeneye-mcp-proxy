@@ -68,11 +68,11 @@ Last updated: 2026-06-11 14:01
 ## Task 8: Move Gateway And Upstream Internals
 
 - Path: `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor/tasks/FPR-8`
-- Task status: spec-reviewing
+- Task status: quality-checking
 - Implementer: checked
-- Spec review: unchecked
+- Spec review: checked
 - Code quality: unchecked
-- Next action: Run spec review.
+- Next action: Run code quality review.
 
 ## Task 9: Final Cleanup And Compatibility Check
 
