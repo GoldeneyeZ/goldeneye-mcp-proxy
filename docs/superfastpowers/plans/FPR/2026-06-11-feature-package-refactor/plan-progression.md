@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-06-11 11:39
+Last updated: 2026-06-11 11:48
 
 ## Task 1: Add Verification Harness And JSON-RPC Helper
 
@@ -32,11 +32,11 @@ Last updated: 2026-06-11 11:39
 ## Task 4: Introduce GatewayToolService
 
 - Path: `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor/tasks/FPR-4`
-- Task status: pending
-- Implementer: unchecked
+- Task status: spec-checking
+- Implementer: checked
 - Spec review: unchecked
 - Code quality: unchecked
-- Next action: Start implementation.
+- Next action: Run spec review.
 
 ## Task 5: Delegate Stdio Tool Registration To GatewayToolService
 
