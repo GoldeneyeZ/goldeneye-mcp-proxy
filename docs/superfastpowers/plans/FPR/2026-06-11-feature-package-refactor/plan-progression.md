@@ -59,11 +59,11 @@ Last updated: 2026-06-11 13:57
 ## Task 7: Split Response Store And Shielding Helpers
 
 - Path: `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor/tasks/FPR-7`
-- Task status: spec-reviewing
+- Task status: quality-checking
 - Implementer: checked
-- Spec review: unchecked
+- Spec review: checked
 - Code quality: unchecked
-- Next action: Run spec review.
+- Next action: Run code quality review.
 
 ## Task 8: Move Gateway And Upstream Internals
 
