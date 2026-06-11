@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-06-11 11:37
+Last updated: 2026-06-11 11:38
 
 ## Task 1: Add Verification Harness And JSON-RPC Helper
 
@@ -23,11 +23,11 @@ Last updated: 2026-06-11 11:37
 ## Task 3: Extract Search Schema Field Helpers
 
 - Path: `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor/tasks/FPR-3`
-- Task status: spec-checking
+- Task status: quality-checking
 - Implementer: checked
-- Spec review: unchecked
+- Spec review: checked
 - Code quality: unchecked
-- Next action: Run spec review.
+- Next action: Run code quality review.
 
 ## Task 4: Introduce GatewayToolService
 
