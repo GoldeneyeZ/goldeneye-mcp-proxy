@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-06-11 13:57
+Last updated: 2026-06-11 14:01
 
 ## Task 1: Add Verification Harness And JSON-RPC Helper
 
@@ -68,11 +68,11 @@ Last updated: 2026-06-11 13:57
 ## Task 8: Move Gateway And Upstream Internals
 
 - Path: `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor/tasks/FPR-8`
-- Task status: pending
-- Implementer: unchecked
+- Task status: spec-reviewing
+- Implementer: checked
 - Spec review: unchecked
 - Code quality: unchecked
-- Next action: Start implementation.
+- Next action: Run spec review.
 
 ## Task 9: Final Cleanup And Compatibility Check
 
