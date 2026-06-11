@@ -18,16 +18,17 @@
  * Tools become available in the search index as each server connects.
  */
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { Config } from "./config/Config.js";
-import { SearchEngine } from "./search/SearchEngine.js";
-import { JobManager } from "./jobs/JobManager.js";
-import { ConnectionManager } from "./connections.js";
-import { ResponseStore, ResponseShield } from "./response-store.js";
-import { createServer } from "./handlers.js";
-import { ProjectRegistry } from "./projects/ProjectRegistry.js";
-import { normalizeLazyConfig } from "./config/lazy-config.js";
-import { CatalogSnapshotManager } from "./catalog/CatalogSnapshotManager.js";
-import { ResourceMonitor } from "./upstreams/resource-monitor.js";
+import { Config } from "../config/Config.js";
+import { SearchEngine } from "../search/SearchEngine.js";
+import { JobManager } from "../jobs/JobManager.js";
+import { ConnectionManager } from "../connections.js";
+import { ResponseStore, ResponseShield } from "../response-store.js";
+import { createServer } from "../handlers.js";
+import { ProjectRegistry } from "../projects/ProjectRegistry.js";
+import { normalizeLazyConfig } from "../config/lazy-config.js";
+import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
+import { ResourceMonitor } from "../upstreams/resource-monitor.js";
+import { injectProjectPath } from "./project-args.js";
 export class MCPGateway {
     config;
     searchEngine;
@@ -96,10 +97,7 @@ export class MCPGateway {
             const client = await this.connections.ensureConnected(serverKey);
             this.connections.markServerUsed(serverKey);
             // Auto-inject projectPath for codegraph tools
-            let finalArgs = job.args;
-            if (serverKey === "codegraph" && finalArgs) {
-                finalArgs = this.injectProjectPath(finalArgs);
-            }
+            const finalArgs = injectProjectPath(serverKey, job.args, this.projectRegistry);
             const result = await client.callTool({
                 name: toolName,
                 arguments: finalArgs,
@@ -108,16 +106,6 @@ export class MCPGateway {
             const { shielded, ref } = this.responseShield.shield(job.toolId.toString(), result);
             job.result = ref ? { ...shielded, _ref: ref } : shielded;
         });
-    }
-    /** Auto-inject projectPath for codegraph tools if not provided */
-    injectProjectPath(args) {
-        if ("projectPath" in args)
-            return args;
-        const resolved = this.projectRegistry.resolveProjectPath();
-        if (resolved) {
-            return { ...args, projectPath: resolved };
-        }
-        return args;
     }
     /**
      * Connect to all enabled upstream servers.
@@ -357,4 +345,4 @@ export class MCPGateway {
         console.error("  [gateway] Shutdown complete");
     }
 }
-//# sourceMappingURL=gateway.js.map
+//# sourceMappingURL=MCPGateway.js.map

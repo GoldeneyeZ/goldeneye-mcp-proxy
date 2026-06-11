@@ -17,13 +17,13 @@
  * This means opencode won't hang waiting for slow servers to connect.
  * Tools become available in the search index as each server connects.
  */
-import { SearchEngine } from "./search/SearchEngine.js";
-import { JobManager } from "./jobs/JobManager.js";
-import { ConnectionManager } from "./connections.js";
-import { ResponseStore, ResponseShield } from "./response-store.js";
-import { ProjectRegistry } from "./projects/ProjectRegistry.js";
-import { CatalogSnapshotManager } from "./catalog/CatalogSnapshotManager.js";
-import { ResourceMonitor } from "./upstreams/resource-monitor.js";
+import { SearchEngine } from "../search/SearchEngine.js";
+import { JobManager } from "../jobs/JobManager.js";
+import { ConnectionManager } from "../connections.js";
+import { ResponseStore, ResponseShield } from "../response-store.js";
+import { ProjectRegistry } from "../projects/ProjectRegistry.js";
+import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
+import { ResourceMonitor } from "../upstreams/resource-monitor.js";
 export declare class MCPGateway {
     private config;
     private searchEngine;
@@ -40,8 +40,6 @@ export declare class MCPGateway {
     private lazyMode;
     private server;
     constructor(configPath?: string, lazyMode?: boolean);
-    /** Auto-inject projectPath for codegraph tools if not provided */
-    private injectProjectPath;
     /**
      * Connect to all enabled upstream servers.
      * For lazy servers: load catalog snapshots without spawning processes.
@@ -80,7 +78,7 @@ export declare class MCPGateway {
         responseStore: ResponseStore;
         responseShield: ResponseShield;
         projectRegistry: ProjectRegistry;
-        statusHolder: import("./handlers.js").StatusHolder;
+        statusHolder: import("../handlers.js").StatusHolder;
         snapshotManager: CatalogSnapshotManager;
         resourceMonitor: ResourceMonitor;
     };

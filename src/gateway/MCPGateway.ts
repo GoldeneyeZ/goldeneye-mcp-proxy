@@ -19,17 +19,18 @@
  */
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { GatewayConfig } from "./shared/types.js";
-import { Config } from "./config/Config.js";
-import { SearchEngine } from "./search/SearchEngine.js";
-import { JobManager } from "./jobs/JobManager.js";
-import { ConnectionManager } from "./connections.js";
-import { ResponseStore, ResponseShield } from "./response-store.js";
-import { createServer } from "./handlers.js";
-import { ProjectRegistry } from "./projects/ProjectRegistry.js";
-import { normalizeLazyConfig } from "./config/lazy-config.js";
-import { CatalogSnapshotManager } from "./catalog/CatalogSnapshotManager.js";
-import { ResourceMonitor } from "./upstreams/resource-monitor.js";
+import type { GatewayConfig } from "../shared/types.js";
+import { Config } from "../config/Config.js";
+import { SearchEngine } from "../search/SearchEngine.js";
+import { JobManager } from "../jobs/JobManager.js";
+import { ConnectionManager } from "../connections.js";
+import { ResponseStore, ResponseShield } from "../response-store.js";
+import { createServer } from "../handlers.js";
+import { ProjectRegistry } from "../projects/ProjectRegistry.js";
+import { normalizeLazyConfig } from "../config/lazy-config.js";
+import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
+import { ResourceMonitor } from "../upstreams/resource-monitor.js";
+import { injectProjectPath } from "./project-args.js";
 
 export class MCPGateway {
   private config: Config;
@@ -41,7 +42,7 @@ export class MCPGateway {
   private projectRegistry: ProjectRegistry;
   private snapshotManager: CatalogSnapshotManager;
   private resourceMonitor: ResourceMonitor;
-  private statusHolder: import("./handlers.js").StatusHolder;
+  private statusHolder: import("../handlers.js").StatusHolder;
   private lastReloadTimestamp: number = Date.now();
   private pendingReload: boolean = false;
   private lazyMode: boolean;
@@ -81,7 +82,7 @@ export class MCPGateway {
     this.projectRegistry.discover(configDefault);
 
     // Create the MCP server with all gateway tools, passing projectRegistry + status
-    const statusHolder: import("./handlers.js").StatusHolder = {
+    const statusHolder: import("../handlers.js").StatusHolder = {
       getConnectedServers: () => this.connections.getConnectedServers(),
       getToolCount: (server) => this.searchEngine.getTools().filter((t) => t.server === server).length,
       getTotalTools: () => this.searchEngine.getTools().length,
@@ -119,10 +120,7 @@ export class MCPGateway {
       this.connections.markServerUsed(serverKey);
 
       // Auto-inject projectPath for codegraph tools
-      let finalArgs = job.args as Record<string, unknown>;
-      if (serverKey === "codegraph" && finalArgs) {
-        finalArgs = this.injectProjectPath(finalArgs);
-      }
+      const finalArgs = injectProjectPath(serverKey, job.args as Record<string, unknown>, this.projectRegistry);
 
       const result = await client.callTool({
         name: toolName,
@@ -133,16 +131,6 @@ export class MCPGateway {
       const { shielded, ref } = this.responseShield.shield(job.toolId.toString(), result);
       job.result = ref ? { ...shielded as object, _ref: ref } : shielded;
     });
-  }
-
-  /** Auto-inject projectPath for codegraph tools if not provided */
-  private injectProjectPath(args: Record<string, unknown>): Record<string, unknown> {
-    if ("projectPath" in args) return args;
-    const resolved = this.projectRegistry.resolveProjectPath();
-    if (resolved) {
-      return { ...args, projectPath: resolved };
-    }
-    return args;
   }
 
   /**

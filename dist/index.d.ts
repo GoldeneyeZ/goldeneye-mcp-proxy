@@ -23,6 +23,6 @@
  *   Only ONE process spawns all upstream MCP servers, eliminating duplicate
  *   npm exec processes across sessions.
  */
-import { MCPGateway } from "./gateway.js";
+import { MCPGateway } from "./gateway/MCPGateway.js";
 import { HttpMcpServer } from "./http-server.js";
 export { MCPGateway, HttpMcpServer };
