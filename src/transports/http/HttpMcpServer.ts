@@ -14,7 +14,7 @@ export class HttpMcpServer {
   constructor(
     private readonly searchEngine: SearchEngine,
     private readonly connections: ConnectionManager,
-    private readonly toolService: GatewayToolService,
+    toolService: GatewayToolService,
     port?: number,
   ) {
     this.port = port || 8767;

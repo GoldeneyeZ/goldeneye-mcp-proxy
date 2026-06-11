@@ -5,14 +5,12 @@ import { HttpMcpRequestRouter } from "./request-router.js";
 export class HttpMcpServer {
     searchEngine;
     connections;
-    toolService;
     httpServer;
     router;
     port;
     constructor(searchEngine, connections, toolService, port) {
         this.searchEngine = searchEngine;
         this.connections = connections;
-        this.toolService = toolService;
         this.port = port || 8767;
         this.router = new HttpMcpRequestRouter(toolService);
     }

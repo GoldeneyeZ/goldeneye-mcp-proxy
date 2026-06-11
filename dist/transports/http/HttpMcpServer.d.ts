@@ -4,7 +4,6 @@ import type { GatewayToolService } from "../../tools/GatewayToolService.js";
 export declare class HttpMcpServer {
     private readonly searchEngine;
     private readonly connections;
-    private readonly toolService;
     private httpServer?;
     private readonly router;
     private readonly port;
