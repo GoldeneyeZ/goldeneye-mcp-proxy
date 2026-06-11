@@ -24,7 +24,7 @@
  * └──────────────────────────────────────────────────────────────────────┘
  */
 
-import type { StoredResponse, ShieldResult, SliceMeta } from "./types.js";
+import type { StoredResponse, ShieldResult, SliceMeta } from "./shared/types.js";
 
 // ──────────────────────────────────────────────
 // Constants — tune these for your token budget

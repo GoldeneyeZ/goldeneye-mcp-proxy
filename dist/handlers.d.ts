@@ -18,8 +18,8 @@
  * └────────────────────────────────────────────────────────────────────┘
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { SearchEngine } from "./search.js";
-import { JobManager } from "./jobs.js";
+import { SearchEngine } from "./search/SearchEngine.js";
+import { JobManager } from "./jobs/JobManager.js";
 import { ConnectionManager } from "./connections.js";
 import { ResponseStore, ResponseShield } from "./response-store.js";
 /**
@@ -32,7 +32,7 @@ import { ResponseStore, ResponseShield } from "./response-store.js";
  * @param responseShield - Truncation engine for response shielding
  * @returns Configured McpServer ready to connect to a transport
  */
-export declare function createServer(searchEngine: SearchEngine, connections: ConnectionManager, jobManager: JobManager, responseStore: ResponseStore, responseShield: ResponseShield, projectRegistry?: import("./projectRegistry.js").ProjectRegistry, statusHolder?: StatusHolder): McpServer;
+export declare function createServer(searchEngine: SearchEngine, connections: ConnectionManager, jobManager: JobManager, responseStore: ResponseStore, responseShield: ResponseShield, projectRegistry?: import("./projects/ProjectRegistry.js").ProjectRegistry, statusHolder?: StatusHolder): McpServer;
 export interface StatusHolder {
     getConnectedServers: () => string[];
     getToolCount: (server: string) => number;

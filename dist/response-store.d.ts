@@ -23,7 +23,7 @@
  * │  tuned for the opencode + Sonnet/Qwen context window.               │
  * └──────────────────────────────────────────────────────────────────────┘
  */
-import type { StoredResponse, ShieldResult, SliceMeta } from "./types.js";
+import type { StoredResponse, ShieldResult, SliceMeta } from "./shared/types.js";
 export declare class ResponseStore {
     /** Map of ref → full stored response */
     private entries;

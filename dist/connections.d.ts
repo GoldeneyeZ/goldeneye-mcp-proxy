@@ -15,10 +15,10 @@
  * with idle timeout auto-disconnect and resource monitoring.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { ConnectionState, ServerStats, UpstreamConfig } from "./types.js";
-import type { CatalogSnapshotManager } from "./catalog-snapshot.js";
-import type { ResourceMonitor } from "./resource-monitor.js";
-import { SearchEngine } from "./search.js";
+import type { ConnectionState, ServerStats, UpstreamConfig } from "./shared/types.js";
+import type { CatalogSnapshotManager } from "./catalog/CatalogSnapshotManager.js";
+import type { ResourceMonitor } from "./upstreams/resource-monitor.js";
+import { SearchEngine } from "./search/SearchEngine.js";
 /**
  * Replace {env:VAR_NAME} patterns with actual environment variable values.
  * If the env var is not set, the placeholder becomes empty string.

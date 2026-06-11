@@ -16,7 +16,7 @@
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { createServerRecord } from "./connection-state.js";
+import { createServerRecord } from "./upstreams/connection-state.js";
 /**
  * Replace {env:VAR_NAME} patterns with actual environment variable values.
  * If the env var is not set, the placeholder becomes empty string.

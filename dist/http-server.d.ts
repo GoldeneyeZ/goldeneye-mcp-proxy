@@ -17,11 +17,11 @@
  *   3. Client sends "tools/list" → server returns 6 gateway tool schemas
  *   4. Client sends "tools/call" with tool name + args → server executes
  */
-import type { SearchEngine } from "./search.js";
+import type { SearchEngine } from "./search/SearchEngine.js";
 import type { ConnectionManager } from "./connections.js";
-import type { JobManager } from "./jobs.js";
+import type { JobManager } from "./jobs/JobManager.js";
 import type { ResponseStore, ResponseShield } from "./response-store.js";
-import type { ProjectRegistry } from "./projectRegistry.js";
+import type { ProjectRegistry } from "./projects/ProjectRegistry.js";
 import type { StatusHolder } from "./handlers.js";
 export declare class HttpMcpServer {
     private searchEngine;

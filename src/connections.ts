@@ -17,11 +17,11 @@
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import type { ConnectionState, ServerConnectionRecord, ServerStats, UpstreamConfig, ToolCatalogEntry } from "./types.js";
-import type { CatalogSnapshotManager } from "./catalog-snapshot.js";
-import { createServerRecord } from "./connection-state.js";
-import type { ResourceMonitor } from "./resource-monitor.js";
-import { SearchEngine } from "./search.js";
+import type { ConnectionState, ServerConnectionRecord, ServerStats, UpstreamConfig, ToolCatalogEntry } from "./shared/types.js";
+import type { CatalogSnapshotManager } from "./catalog/CatalogSnapshotManager.js";
+import { createServerRecord } from "./upstreams/connection-state.js";
+import type { ResourceMonitor } from "./upstreams/resource-monitor.js";
+import { SearchEngine } from "./search/SearchEngine.js";
 
 /**
  * Replace {env:VAR_NAME} patterns with actual environment variable values.

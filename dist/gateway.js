@@ -18,16 +18,16 @@
  * Tools become available in the search index as each server connects.
  */
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { Config } from "./config.js";
-import { SearchEngine } from "./search.js";
-import { JobManager } from "./jobs.js";
+import { Config } from "./config/Config.js";
+import { SearchEngine } from "./search/SearchEngine.js";
+import { JobManager } from "./jobs/JobManager.js";
 import { ConnectionManager } from "./connections.js";
 import { ResponseStore, ResponseShield } from "./response-store.js";
 import { createServer } from "./handlers.js";
-import { ProjectRegistry } from "./projectRegistry.js";
-import { normalizeLazyConfig } from "./lazy-config.js";
-import { CatalogSnapshotManager } from "./catalog-snapshot.js";
-import { ResourceMonitor } from "./resource-monitor.js";
+import { ProjectRegistry } from "./projects/ProjectRegistry.js";
+import { normalizeLazyConfig } from "./config/lazy-config.js";
+import { CatalogSnapshotManager } from "./catalog/CatalogSnapshotManager.js";
+import { ResourceMonitor } from "./upstreams/resource-monitor.js";
 export class MCPGateway {
     config;
     searchEngine;

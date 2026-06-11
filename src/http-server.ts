@@ -19,13 +19,13 @@
  */
 
 import http from "node:http";
-import type { SearchEngine } from "./search.js";
+import type { SearchEngine } from "./search/SearchEngine.js";
 import type { ConnectionManager } from "./connections.js";
-import type { JobManager } from "./jobs.js";
+import type { JobManager } from "./jobs/JobManager.js";
 import type { ResponseStore, ResponseShield } from "./response-store.js";
-import type { ProjectRegistry } from "./projectRegistry.js";
+import type { ProjectRegistry } from "./projects/ProjectRegistry.js";
 import type { StatusHolder } from "./handlers.js";
-import type { ToolCatalogEntry } from "./types.js";
+import type { ToolCatalogEntry } from "./shared/types.js";
 
 // Re-declare SearchFilters inline to avoid import issues
 interface SearchFilters {

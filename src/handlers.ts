@@ -20,9 +20,9 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { SearchFilters } from "./types.js";
-import { SearchEngine } from "./search.js";
-import { JobManager } from "./jobs.js";
+import type { SearchFilters } from "./shared/types.js";
+import { SearchEngine } from "./search/SearchEngine.js";
+import { JobManager } from "./jobs/JobManager.js";
 import { ConnectionManager } from "./connections.js";
 import { ResponseStore, ResponseShield } from "./response-store.js";
 
@@ -42,7 +42,7 @@ export function createServer(
   jobManager: JobManager,
   responseStore: ResponseStore,
   responseShield: ResponseShield,
-  projectRegistry?: import("./projectRegistry.js").ProjectRegistry,
+  projectRegistry?: import("./projects/ProjectRegistry.js").ProjectRegistry,
   statusHolder?: StatusHolder
 ): McpServer {
   const server = new McpServer(
