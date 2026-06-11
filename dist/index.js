@@ -29,6 +29,7 @@ import { HttpMcpServer } from "./transports/http/HttpMcpServer.js";
 let configPath;
 let port;
 let discoverMode = false;
+let helpMode = false;
 const args = process.argv.slice(2);
 for (let i = 0; i < args.length; i++) {
     if (args[i] === "--port" && i + 1 < args.length) {
@@ -40,11 +41,17 @@ for (let i = 0; i < args.length; i++) {
     else if (args[i] === "--discover") {
         discoverMode = true;
     }
+    else if (args[i] === "--help" || args[i] === "-h") {
+        helpMode = true;
+    }
     else if (!args[i].startsWith("--")) {
         configPath = args[i];
     }
 }
-if (discoverMode) {
+if (helpMode) {
+    printUsage();
+}
+else if (discoverMode) {
     runDiscovery(configPath);
 }
 else if (port) {
@@ -56,6 +63,20 @@ else if (port) {
 else {
     // ── Stdio mode (original behavior) ──
     startStdio(configPath);
+}
+function printUsage() {
+    console.log(`Usage:
+  goldeneye-mcp-proxy [path-to-config.json]
+  goldeneye-mcp-proxy --port <port> [path-to-config.json]
+  goldeneye-mcp-proxy --daemon [path-to-config.json]
+  goldeneye-mcp-proxy --discover [path-to-config.json]
+  goldeneye-mcp-proxy --help
+
+Options:
+  --port <port>  Start HTTP daemon mode on the given port.
+  --daemon       Start HTTP daemon mode on port 8767.
+  --discover     Force catalog discovery, save snapshots, and exit.
+  --help, -h     Print this help text and exit.`);
 }
 function startStdio(configPath) {
     const gateway = new MCPGateway(configPath);

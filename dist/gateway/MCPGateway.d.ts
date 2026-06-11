@@ -25,7 +25,7 @@ import { ResponseStore } from "../responses/ResponseStore.js";
 import { GatewayToolService } from "../tools/GatewayToolService.js";
 import { ProjectRegistry } from "../projects/ProjectRegistry.js";
 import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
-import { ResourceMonitor } from "../upstreams/resource-monitor.js";
+import { ResourceMonitor } from "../upstreams/ResourceMonitor.js";
 import type { StatusHolder } from "./gateway-status.js";
 export declare class MCPGateway {
     private config;

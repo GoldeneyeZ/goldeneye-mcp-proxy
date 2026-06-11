@@ -1,5 +1,5 @@
 /**
- * connection-state.ts — Connection state machine types and helpers.
+ * ConnectionState.ts — Connection state machine types and helpers.
  */
 export function isConnected(state) {
     return state === 'connected';
@@ -15,4 +15,4 @@ export function createServerRecord() {
         requestCount: 0,
     };
 }
-//# sourceMappingURL=connection-state.js.map
+//# sourceMappingURL=ConnectionState.js.map

@@ -20,9 +20,9 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import type { ConnectionState, ServerConnectionRecord, ServerStats, UpstreamConfig, ToolCatalogEntry } from "../shared/types.js";
 import type { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
 import { SearchEngine } from "../search/SearchEngine.js";
-import { createServerRecord } from "./connection-state.js";
+import { createServerRecord } from "./ConnectionState.js";
 import { parseEnvironmentVariables } from "./environment.js";
-import type { ResourceMonitor } from "./resource-monitor.js";
+import type { ResourceMonitor } from "./ResourceMonitor.js";
 
 export class ConnectionManager {
   /** Active upstream client connections keyed by server name */

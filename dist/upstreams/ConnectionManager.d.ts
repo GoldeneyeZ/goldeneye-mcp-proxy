@@ -18,7 +18,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { ConnectionState, ServerStats, UpstreamConfig } from "../shared/types.js";
 import type { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
 import { SearchEngine } from "../search/SearchEngine.js";
-import type { ResourceMonitor } from "./resource-monitor.js";
+import type { ResourceMonitor } from "./ResourceMonitor.js";
 export declare class ConnectionManager {
     private searchEngine;
     /** Active upstream client connections keyed by server name */

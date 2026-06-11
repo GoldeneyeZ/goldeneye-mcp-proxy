@@ -29,7 +29,7 @@ import { GatewayToolService } from "../tools/GatewayToolService.js";
 import { ProjectRegistry } from "../projects/ProjectRegistry.js";
 import { normalizeLazyConfig } from "../config/lazy-config.js";
 import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
-import { ResourceMonitor } from "../upstreams/resource-monitor.js";
+import { ResourceMonitor } from "../upstreams/ResourceMonitor.js";
 import { injectProjectPath } from "./project-args.js";
 export class MCPGateway {
     config;

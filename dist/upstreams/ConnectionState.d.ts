@@ -1,5 +1,5 @@
 /**
- * connection-state.ts — Connection state machine types and helpers.
+ * ConnectionState.ts — Connection state machine types and helpers.
  */
 import type { ConnectionState, ServerConnectionRecord } from "../shared/types.js";
 export declare function isConnected(state: ConnectionState): boolean;

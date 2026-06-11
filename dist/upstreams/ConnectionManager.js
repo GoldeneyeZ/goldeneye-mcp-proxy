@@ -16,7 +16,7 @@
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { createServerRecord } from "./connection-state.js";
+import { createServerRecord } from "./ConnectionState.js";
 import { parseEnvironmentVariables } from "./environment.js";
 export class ConnectionManager {
     searchEngine;

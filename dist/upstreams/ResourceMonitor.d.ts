@@ -1,5 +1,5 @@
 /**
- * resource-monitor.ts — Poll child process resources for lazy-loaded MCP servers.
+ * ResourceMonitor.ts — Poll child process resources for lazy-loaded MCP servers.
  *
  * Uses platform-specific methods to find child PIDs and measure RAM:
  *   Linux: /proc/<pid>/status (fast, no subprocess)
