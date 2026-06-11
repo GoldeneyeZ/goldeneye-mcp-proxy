@@ -2,7 +2,8 @@
 
 **Plan:** `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor.md`
 **Task:** `FPR-6`
-**Commit SHA:** `7d0d2ef` for implementation. Metadata update is recorded separately after the implementation commit.
+**Commit SHA:** `6774418` latest FPR-6 implementation commit.
+**Reviewed commit range:** `7d0d2ef..6774418`
 
 ## Starting Context
 
@@ -48,9 +49,13 @@ Verification commands/results:
 - `dist/transports/http/HttpMcpServer.js` existence check: PASS
 - `dist/http-server.js` stale root output absence check: PASS
 - Rebuild after removing stale generated root HTTP files: PASS
+- Cleanup `./node_modules/.bin/tsc --noEmit`: PASS
+- Cleanup `npm run build`: PASS
+- Cleanup `npm test`: PASS
 
 Implementation notes:
 - HTTP tool behavior now delegates to `GatewayToolService` through `HttpMcpRequestRouter`.
 - `HttpMcpServer` now owns HTTP lifecycle, CORS, health, request-body parsing, and response writing.
 - JSON-RPC helpers from FPR-1 are reused by the router/server.
 - HTTP health still uses `SearchEngine` and `ConnectionManager`.
+- Removed an unused `toolService` instance field from `HttpMcpServer` in cleanup commit `6774418`; the constructor parameter is used only to create `HttpMcpRequestRouter`.
