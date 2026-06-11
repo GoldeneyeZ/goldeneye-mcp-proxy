@@ -3,18 +3,16 @@
 <TASK-ID>FPR-8</TASK-ID>
 
 **Files:**
-- Move/Modify: `src/gateway.ts` -> `src/gateway/MCPGateway.ts`
 - Move/Modify: `src/connections.ts` -> `src/upstreams/ConnectionManager.ts`
 - Create: `src/upstreams/environment.ts`
 - Modify: `src/index.ts`
 - Modify: imports across `src`
 
-- [ ] **Step 1: Move gateway and connection facade files**
+- [ ] **Step 1: Move connection facade file**
 
 Run:
 
 ```bash
-git mv src/gateway.ts src/gateway/MCPGateway.ts
 git mv src/connections.ts src/upstreams/ConnectionManager.ts
 ```
 
@@ -42,7 +40,7 @@ import { parseEnvironmentVariables } from "./environment.js";
 
 - [ ] **Step 3: Update public imports and exports**
 
-In `src/index.ts`, import from feature packages:
+In `src/index.ts`, keep imports on feature package paths:
 
 ```ts
 import { MCPGateway } from "./gateway/MCPGateway.js";

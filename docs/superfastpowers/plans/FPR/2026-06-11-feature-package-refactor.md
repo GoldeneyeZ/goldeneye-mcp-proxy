@@ -351,7 +351,8 @@ git commit -m "refactor: extract search schema helpers"
 - Create: `src/tools/GatewayToolService.ts`
 - Create: `src/gateway/project-args.ts`
 - Create: `tests/gateway-tool-service.test.ts`
-- Modify: `src/gateway/MCPGateway.ts` or `src/gateway.ts` if Task 6 has not moved it yet
+- Move/Modify: `src/gateway.ts` -> `src/gateway/MCPGateway.ts`
+- Modify: `src/index.ts`
 
 - [ ] **Step 1: Write failing service tests**
 
@@ -457,7 +458,22 @@ Run: `npm test -- --test-name-pattern="GatewayToolService|search returns|describ
 
 Expected: FAIL because `src/tools/GatewayToolService.ts` does not exist.
 
-- [ ] **Step 3: Add project argument helper**
+- [ ] **Step 3: Move gateway file so gateway helpers can live beside it**
+
+Run:
+
+```bash
+mkdir -p src/gateway
+git mv src/gateway.ts src/gateway/MCPGateway.ts
+```
+
+In `src/index.ts`, update the gateway import:
+
+```ts
+import { MCPGateway } from "./gateway/MCPGateway.js";
+```
+
+- [ ] **Step 4: Add project argument helper**
 
 Create `src/gateway/project-args.ts`:
 
@@ -476,7 +492,7 @@ export function injectProjectPath(
 }
 ```
 
-- [ ] **Step 4: Implement `GatewayToolService`**
+- [ ] **Step 5: Implement `GatewayToolService`**
 
 Create `src/tools/GatewayToolService.ts` with this public surface and move behavior from `src/handlers.ts:73-398` and `src/http-server.ts:382-602` into these methods:
 
@@ -639,15 +655,15 @@ function parseToolId(toolId: string): { serverKey: string; toolName: string } {
 }
 ```
 
-- [ ] **Step 5: Wire async job execution through shared helper**
+- [ ] **Step 6: Wire async job execution through shared helper**
 
-In the gateway constructor, replace duplicated codegraph project argument injection in the `jobManager.setExecuteJob` callback with:
+In `src/gateway/MCPGateway.ts`, replace duplicated codegraph project argument injection in the `jobManager.setExecuteJob` callback with:
 
 ```ts
 const finalArgs = injectProjectPath(serverKey, job.args as Record<string, unknown>, this.projectRegistry);
 ```
 
-- [ ] **Step 6: Run verification**
+- [ ] **Step 7: Run verification**
 
 Run: `npm test -- --test-name-pattern="GatewayToolService|search returns|describe returns|invoke rejects"`
 
@@ -657,10 +673,10 @@ Run: `./node_modules/.bin/tsc --noEmit`
 
 Expected: PASS with no diagnostics.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add src/tools/GatewayToolService.ts src/gateway/project-args.ts tests/gateway-tool-service.test.ts src
+git add src/tools/GatewayToolService.ts src/gateway/MCPGateway.ts src/gateway/project-args.ts src/index.ts tests/gateway-tool-service.test.ts src
 git commit -m "refactor: add shared gateway tool service"
 ```
 
@@ -1588,18 +1604,16 @@ git commit -m "refactor: split response shielding helpers"
 <TASK-ID>FPR-8</TASK-ID>
 
 **Files:**
-- Move/Modify: `src/gateway.ts` -> `src/gateway/MCPGateway.ts`
 - Move/Modify: `src/connections.ts` -> `src/upstreams/ConnectionManager.ts`
 - Create: `src/upstreams/environment.ts`
 - Modify: `src/index.ts`
 - Modify: imports across `src`
 
-- [ ] **Step 1: Move gateway and connection facade files**
+- [ ] **Step 1: Move connection facade file**
 
 Run:
 
 ```bash
-git mv src/gateway.ts src/gateway/MCPGateway.ts
 git mv src/connections.ts src/upstreams/ConnectionManager.ts
 ```
 
@@ -1627,7 +1641,7 @@ import { parseEnvironmentVariables } from "./environment.js";
 
 - [ ] **Step 3: Update public imports and exports**
 
-In `src/index.ts`, import from feature packages:
+In `src/index.ts`, keep imports on feature package paths:
 
 ```ts
 import { MCPGateway } from "./gateway/MCPGateway.js";

@@ -9,7 +9,8 @@
 - `src/tools/GatewayToolService.ts`: Starting point from task file entry: Create: `src/tools/GatewayToolService.ts`
 - `src/gateway/project-args.ts`: Starting point from task file entry: Create: `src/gateway/project-args.ts`
 - `tests/gateway-tool-service.test.ts`: Starting point from task file entry: Create: `tests/gateway-tool-service.test.ts`
-- `src/gateway/MCPGateway.ts`: Starting point from task file entry: Modify: `src/gateway/MCPGateway.ts` or `src/gateway.ts` if Task 6 has not moved it yet
+- `src/gateway.ts`: Starting point from task file entry: Move/Modify: `src/gateway.ts` -> `src/gateway/MCPGateway.ts`
+- `src/index.ts`: Starting point from task file entry: Modify: `src/index.ts`
 
 ## Open Context Rule
 
