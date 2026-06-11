@@ -2,7 +2,7 @@
 
 **Plan:** `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor.md`
 **Task:** `FPR-2`
-**Commit SHA:** Pending until task completion. If review fixes add commits, update to the latest task commit and note the reviewed range below.
+**Commit SHA:** `f9aa74a` for implementation. Metadata update is recorded separately after the implementation commit.
 
 ## Starting Context
 
@@ -23,4 +23,44 @@ The files above are starting points only. Inspect any additional files needed to
 
 ## Completion Updates
 
-The implementer updates this section before review with the final task commit SHA, reviewed commit range if relevant, files created, files modified, additional relevant files, and verification commands/results.
+Implemented FPR-2.
+
+Files created or moved:
+- `src/shared/types.ts`
+- `src/config/Config.ts`
+- `src/config/lazy-config.ts`
+- `src/catalog/CatalogSnapshotManager.ts`
+- `src/jobs/JobManager.ts`
+- `src/search/SearchEngine.ts`
+- `src/projects/ProjectRegistry.ts`
+- `src/upstreams/connection-state.ts`
+- `src/upstreams/resource-monitor.ts`
+- Generated matching `dist/` feature-package files.
+
+Files modified:
+- `src/index.ts` was inspected but did not require changes for this task.
+- `src/gateway.ts`
+- `src/http-server.ts`
+- `src/handlers.ts`
+- `src/connections.ts`
+- `src/response-store.ts`
+- Generated root `dist/` files that still correspond to root source files.
+
+Files removed:
+- Stale generated root `dist/` files for moved modules.
+
+Additional relevant files:
+- `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor/tasks/FPR-2/task.md`
+
+Verification commands/results:
+- Baseline `./node_modules/.bin/tsc --noEmit`: PASS
+- Baseline `npm test`: PASS
+- Post-move `./node_modules/.bin/tsc --noEmit`: PASS
+- Post-move `npm run build`: PASS
+- Post-move `npm test`: PASS
+- Rebuild after removing stale generated `dist/` files: PASS
+
+Implementation notes:
+- This task only moved low-risk files and updated import paths.
+- Root `src/connections.ts`, `src/gateway.ts`, `src/http-server.ts`, `src/handlers.ts`, and `src/response-store.ts` remain in place for later tasks.
+- `dist/` is tracked in this repository, so generated files were updated and stale generated root files for moved modules were removed.
