@@ -11,30 +11,7 @@
  * and only gets back IDs + descriptions, never full JSON Schemas.
  */
 import MiniSearch from "minisearch";
-function toCamelCase(str) {
-    return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-}
-function extractFieldNames(schema) {
-    if (!schema || typeof schema !== "object")
-        return [];
-    const obj = schema;
-    if (obj.type === "object" && obj.properties && typeof obj.properties === "object") {
-        return Object.keys(obj.properties);
-    }
-    if (typeof obj.shape === "function") {
-        try {
-            const shape = obj.shape();
-            return Object.keys(shape);
-        }
-        catch {
-            return [];
-        }
-    }
-    if (obj.inputSchema && typeof obj.inputSchema === "object") {
-        return extractFieldNames(obj.inputSchema);
-    }
-    return [];
-}
+import { extractFieldNames, toCamelCase } from "./schema-fields.js";
 export class SearchEngine {
     /** Full tool catalog keyed by composite ID */
     catalog = new Map();
