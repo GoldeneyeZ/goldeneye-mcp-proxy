@@ -1,5 +1,5 @@
 import http from "node:http";
-import type { ConnectionManager } from "../../connections.js";
+import type { ConnectionManager } from "../../upstreams/ConnectionManager.js";
 import type { SearchEngine } from "../../search/SearchEngine.js";
 import type { GatewayToolService } from "../../tools/GatewayToolService.js";
 import { applyCorsHeaders, handleCorsPreflight } from "./cors.js";

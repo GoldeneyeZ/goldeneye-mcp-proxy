@@ -1,11 +1,11 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { ConnectionManager } from "../connections.js";
 import type { JobManager } from "../jobs/JobManager.js";
 import type { ProjectRegistry } from "../projects/ProjectRegistry.js";
 import type { ResponseShield } from "../responses/ResponseShield.js";
 import type { ResponseStore } from "../responses/ResponseStore.js";
 import type { SearchEngine } from "../search/SearchEngine.js";
 import type { SearchFilters } from "../shared/types.js";
+import type { ConnectionManager } from "../upstreams/ConnectionManager.js";
 import { injectProjectPath } from "../gateway/project-args.js";
 
 export interface GatewayToolServiceDeps {

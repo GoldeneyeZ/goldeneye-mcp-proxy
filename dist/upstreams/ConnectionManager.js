@@ -1,5 +1,5 @@
 /**
- * connections.ts — Manages connections to upstream MCP servers.
+ * ConnectionManager.ts — Manages connections to upstream MCP servers.
  *
  * For each upstream server in the config:
  *   1. Spawns a Client + StdioClientTransport (local) or StreamableHTTP/WebSocket (remote)
@@ -16,23 +16,8 @@
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { createServerRecord } from "./upstreams/connection-state.js";
-/**
- * Replace {env:VAR_NAME} patterns with actual environment variable values.
- * If the env var is not set, the placeholder becomes empty string.
- */
-export function parseEnvironmentVariables(env) {
-    if (!env)
-        return undefined;
-    const parsed = {};
-    const processEnv = process.env;
-    for (const [key, value] of Object.entries(env)) {
-        parsed[key] = value.replace(/\{env:(\w+)\}/g, (_, envVarName) => {
-            return processEnv[envVarName] || "";
-        });
-    }
-    return parsed;
-}
+import { createServerRecord } from "./connection-state.js";
+import { parseEnvironmentVariables } from "./environment.js";
 export class ConnectionManager {
     searchEngine;
     /** Active upstream client connections keyed by server name */
@@ -358,4 +343,4 @@ export class ConnectionManager {
         return Array.from(this.upstreams.keys());
     }
 }
-//# sourceMappingURL=connections.js.map
+//# sourceMappingURL=ConnectionManager.js.map

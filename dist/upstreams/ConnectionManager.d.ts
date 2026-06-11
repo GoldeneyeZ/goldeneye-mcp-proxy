@@ -1,5 +1,5 @@
 /**
- * connections.ts — Manages connections to upstream MCP servers.
+ * ConnectionManager.ts — Manages connections to upstream MCP servers.
  *
  * For each upstream server in the config:
  *   1. Spawns a Client + StdioClientTransport (local) or StreamableHTTP/WebSocket (remote)
@@ -15,15 +15,10 @@
  * with idle timeout auto-disconnect and resource monitoring.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { ConnectionState, ServerStats, UpstreamConfig } from "./shared/types.js";
-import type { CatalogSnapshotManager } from "./catalog/CatalogSnapshotManager.js";
-import type { ResourceMonitor } from "./upstreams/resource-monitor.js";
-import { SearchEngine } from "./search/SearchEngine.js";
-/**
- * Replace {env:VAR_NAME} patterns with actual environment variable values.
- * If the env var is not set, the placeholder becomes empty string.
- */
-export declare function parseEnvironmentVariables(env?: Record<string, string>): Record<string, string> | undefined;
+import type { ConnectionState, ServerStats, UpstreamConfig } from "../shared/types.js";
+import type { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
+import { SearchEngine } from "../search/SearchEngine.js";
+import type { ResourceMonitor } from "./resource-monitor.js";
 export declare class ConnectionManager {
     private searchEngine;
     /** Active upstream client connections keyed by server name */

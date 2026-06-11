@@ -23,7 +23,7 @@ import type { GatewayConfig } from "../shared/types.js";
 import { Config } from "../config/Config.js";
 import { SearchEngine } from "../search/SearchEngine.js";
 import { JobManager } from "../jobs/JobManager.js";
-import { ConnectionManager } from "../connections.js";
+import { ConnectionManager } from "../upstreams/ConnectionManager.js";
 import { ResponseShield } from "../responses/ResponseShield.js";
 import { ResponseStore } from "../responses/ResponseStore.js";
 import { createServer } from "../tools/stdio-tool-registration.js";

@@ -1,5 +1,5 @@
 /**
- * connections.ts — Manages connections to upstream MCP servers.
+ * ConnectionManager.ts — Manages connections to upstream MCP servers.
  *
  * For each upstream server in the config:
  *   1. Spawns a Client + StdioClientTransport (local) or StreamableHTTP/WebSocket (remote)
@@ -17,32 +17,12 @@
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import type { ConnectionState, ServerConnectionRecord, ServerStats, UpstreamConfig, ToolCatalogEntry } from "./shared/types.js";
-import type { CatalogSnapshotManager } from "./catalog/CatalogSnapshotManager.js";
-import { createServerRecord } from "./upstreams/connection-state.js";
-import type { ResourceMonitor } from "./upstreams/resource-monitor.js";
-import { SearchEngine } from "./search/SearchEngine.js";
-
-/**
- * Replace {env:VAR_NAME} patterns with actual environment variable values.
- * If the env var is not set, the placeholder becomes empty string.
- */
-export function parseEnvironmentVariables(
-  env?: Record<string, string>
-): Record<string, string> | undefined {
-  if (!env) return undefined;
-
-  const parsed: Record<string, string> = {};
-  const processEnv = process.env as Record<string, string>;
-
-  for (const [key, value] of Object.entries(env)) {
-    parsed[key] = value.replace(/\{env:(\w+)\}/g, (_, envVarName: string) => {
-      return processEnv[envVarName] || "";
-    });
-  }
-
-  return parsed;
-}
+import type { ConnectionState, ServerConnectionRecord, ServerStats, UpstreamConfig, ToolCatalogEntry } from "../shared/types.js";
+import type { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
+import { SearchEngine } from "../search/SearchEngine.js";
+import { createServerRecord } from "./connection-state.js";
+import { parseEnvironmentVariables } from "./environment.js";
+import type { ResourceMonitor } from "./resource-monitor.js";
 
 export class ConnectionManager {
   /** Active upstream client connections keyed by server name */
