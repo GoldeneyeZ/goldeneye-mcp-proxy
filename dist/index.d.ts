@@ -24,5 +24,5 @@
  *   npm exec processes across sessions.
  */
 import { MCPGateway } from "./gateway/MCPGateway.js";
-import { HttpMcpServer } from "./http-server.js";
+import { HttpMcpServer } from "./transports/http/HttpMcpServer.js";
 export { MCPGateway, HttpMcpServer };

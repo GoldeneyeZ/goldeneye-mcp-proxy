@@ -24,7 +24,7 @@
  *   npm exec processes across sessions.
  */
 import { MCPGateway } from "./gateway/MCPGateway.js";
-import { HttpMcpServer } from "./http-server.js";
+import { HttpMcpServer } from "./transports/http/HttpMcpServer.js";
 // Parse CLI arguments
 let configPath;
 let port;
@@ -83,7 +83,7 @@ async function startDaemon(configPath, daemonPort) {
     await gateway.connectAll();
     // Create HTTP server sharing the same services
     const services = gateway.getSharedServices();
-    const httpServer = new HttpMcpServer(services.searchEngine, services.connections, services.jobManager, services.responseStore, services.responseShield, services.projectRegistry, services.statusHolder, daemonPort);
+    const httpServer = new HttpMcpServer(services.searchEngine, services.connections, services.toolService, daemonPort);
     // Register signal handlers now that httpServer is defined
     process.on("SIGINT", async () => {
         await httpServer.shutdown();

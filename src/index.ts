@@ -26,7 +26,7 @@
  */
 
 import { MCPGateway } from "./gateway/MCPGateway.js";
-import { HttpMcpServer } from "./http-server.js";
+import { HttpMcpServer } from "./transports/http/HttpMcpServer.js";
 
 // Parse CLI arguments
 let configPath: string | undefined;
@@ -95,11 +95,7 @@ async function startDaemon(configPath?: string, daemonPort?: number): Promise<vo
   const httpServer = new HttpMcpServer(
     services.searchEngine,
     services.connections,
-    services.jobManager,
-    services.responseStore,
-    services.responseShield,
-    services.projectRegistry,
-    services.statusHolder as any,
+    services.toolService,
     daemonPort,
   );
 
