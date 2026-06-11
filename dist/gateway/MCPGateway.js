@@ -23,7 +23,8 @@ import { SearchEngine } from "../search/SearchEngine.js";
 import { JobManager } from "../jobs/JobManager.js";
 import { ConnectionManager } from "../connections.js";
 import { ResponseStore, ResponseShield } from "../response-store.js";
-import { createServer } from "../handlers.js";
+import { createServer } from "../tools/stdio-tool-registration.js";
+import { GatewayToolService } from "../tools/GatewayToolService.js";
 import { ProjectRegistry } from "../projects/ProjectRegistry.js";
 import { normalizeLazyConfig } from "../config/lazy-config.js";
 import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
@@ -40,6 +41,7 @@ export class MCPGateway {
     snapshotManager;
     resourceMonitor;
     statusHolder;
+    toolService;
     lastReloadTimestamp = Date.now();
     pendingReload = false;
     lazyMode;
@@ -84,7 +86,15 @@ export class MCPGateway {
             getDefaultProject: () => this.projectRegistry.defaultProjectName,
         };
         this.statusHolder = statusHolder;
-        this.server = createServer(this.searchEngine, this.connections, this.jobManager, this.responseStore, this.responseShield, this.projectRegistry, statusHolder);
+        this.toolService = new GatewayToolService({
+            searchEngine: this.searchEngine,
+            connections: this.connections,
+            jobManager: this.jobManager,
+            responseStore: this.responseStore,
+            responseShield: this.responseShield,
+            projectRegistry: this.projectRegistry,
+        });
+        this.server = createServer(this.toolService, statusHolder);
         // Wire up the job manager's execute function
         this.jobManager.setExecuteJob(async (job) => {
             const separatorIndex = job.toolId.toString().indexOf("::");
@@ -331,6 +341,7 @@ export class MCPGateway {
             statusHolder: this.statusHolder,
             snapshotManager: this.snapshotManager,
             resourceMonitor: this.resourceMonitor,
+            toolService: this.toolService,
         };
     }
     /** Graceful shutdown — stop watching, drain jobs, disconnect all */

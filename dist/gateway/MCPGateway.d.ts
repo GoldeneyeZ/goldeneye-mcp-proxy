@@ -21,9 +21,11 @@ import { SearchEngine } from "../search/SearchEngine.js";
 import { JobManager } from "../jobs/JobManager.js";
 import { ConnectionManager } from "../connections.js";
 import { ResponseStore, ResponseShield } from "../response-store.js";
+import { GatewayToolService } from "../tools/GatewayToolService.js";
 import { ProjectRegistry } from "../projects/ProjectRegistry.js";
 import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
 import { ResourceMonitor } from "../upstreams/resource-monitor.js";
+import type { StatusHolder } from "./gateway-status.js";
 export declare class MCPGateway {
     private config;
     private searchEngine;
@@ -35,6 +37,7 @@ export declare class MCPGateway {
     private snapshotManager;
     private resourceMonitor;
     private statusHolder;
+    private toolService;
     private lastReloadTimestamp;
     private pendingReload;
     private lazyMode;
@@ -78,9 +81,10 @@ export declare class MCPGateway {
         responseStore: ResponseStore;
         responseShield: ResponseShield;
         projectRegistry: ProjectRegistry;
-        statusHolder: import("../handlers.js").StatusHolder;
+        statusHolder: StatusHolder;
         snapshotManager: CatalogSnapshotManager;
         resourceMonitor: ResourceMonitor;
+        toolService: GatewayToolService;
     };
     /** Graceful shutdown — stop watching, drain jobs, disconnect all */
     shutdown(): Promise<void>;

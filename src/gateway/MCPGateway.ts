@@ -25,11 +25,13 @@ import { SearchEngine } from "../search/SearchEngine.js";
 import { JobManager } from "../jobs/JobManager.js";
 import { ConnectionManager } from "../connections.js";
 import { ResponseStore, ResponseShield } from "../response-store.js";
-import { createServer } from "../handlers.js";
+import { createServer } from "../tools/stdio-tool-registration.js";
+import { GatewayToolService } from "../tools/GatewayToolService.js";
 import { ProjectRegistry } from "../projects/ProjectRegistry.js";
 import { normalizeLazyConfig } from "../config/lazy-config.js";
 import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
 import { ResourceMonitor } from "../upstreams/resource-monitor.js";
+import type { StatusHolder } from "./gateway-status.js";
 import { injectProjectPath } from "./project-args.js";
 
 export class MCPGateway {
@@ -42,7 +44,8 @@ export class MCPGateway {
   private projectRegistry: ProjectRegistry;
   private snapshotManager: CatalogSnapshotManager;
   private resourceMonitor: ResourceMonitor;
-  private statusHolder: import("../handlers.js").StatusHolder;
+  private statusHolder: StatusHolder;
+  private toolService: GatewayToolService;
   private lastReloadTimestamp: number = Date.now();
   private pendingReload: boolean = false;
   private lazyMode: boolean;
@@ -82,7 +85,7 @@ export class MCPGateway {
     this.projectRegistry.discover(configDefault);
 
     // Create the MCP server with all gateway tools, passing projectRegistry + status
-    const statusHolder: import("../handlers.js").StatusHolder = {
+    const statusHolder: StatusHolder = {
       getConnectedServers: () => this.connections.getConnectedServers(),
       getToolCount: (server) => this.searchEngine.getTools().filter((t) => t.server === server).length,
       getTotalTools: () => this.searchEngine.getTools().length,
@@ -95,15 +98,16 @@ export class MCPGateway {
 
     this.statusHolder = statusHolder;
 
-    this.server = createServer(
-      this.searchEngine,
-      this.connections,
-      this.jobManager,
-      this.responseStore,
-      this.responseShield,
-      this.projectRegistry,
-      statusHolder
-    );
+    this.toolService = new GatewayToolService({
+      searchEngine: this.searchEngine,
+      connections: this.connections,
+      jobManager: this.jobManager,
+      responseStore: this.responseStore,
+      responseShield: this.responseShield,
+      projectRegistry: this.projectRegistry,
+    });
+
+    this.server = createServer(this.toolService, statusHolder);
 
     // Wire up the job manager's execute function
     this.jobManager.setExecuteJob(async (job) => {
@@ -373,6 +377,7 @@ export class MCPGateway {
       statusHolder: this.statusHolder,
       snapshotManager: this.snapshotManager,
       resourceMonitor: this.resourceMonitor,
+      toolService: this.toolService,
     };
   }
 

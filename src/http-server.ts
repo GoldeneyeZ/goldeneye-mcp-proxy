@@ -24,7 +24,7 @@ import type { ConnectionManager } from "./connections.js";
 import type { JobManager } from "./jobs/JobManager.js";
 import type { ResponseStore, ResponseShield } from "./response-store.js";
 import type { ProjectRegistry } from "./projects/ProjectRegistry.js";
-import type { StatusHolder } from "./handlers.js";
+import type { StatusHolder } from "./gateway/gateway-status.js";
 import type { ToolCatalogEntry } from "./shared/types.js";
 
 // Re-declare SearchFilters inline to avoid import issues
