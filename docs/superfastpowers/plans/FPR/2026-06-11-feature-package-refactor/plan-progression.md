@@ -1,15 +1,15 @@
 # Plan Progression
 
-Last updated: 2026-06-11 11:23
+Last updated: 2026-06-11 11:24
 
 ## Task 1: Add Verification Harness And JSON-RPC Helper
 
 - Path: `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor/tasks/FPR-1`
-- Task status: spec-checking
+- Task status: quality-checking
 - Implementer: checked
-- Spec review: unchecked
+- Spec review: checked
 - Code quality: unchecked
-- Next action: Run spec review.
+- Next action: Run code quality review.
 
 ## Task 2: Move Low-Risk Files Into Feature Packages
 
