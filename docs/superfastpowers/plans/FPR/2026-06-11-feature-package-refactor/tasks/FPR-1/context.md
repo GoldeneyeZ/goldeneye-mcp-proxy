@@ -2,7 +2,7 @@
 
 **Plan:** `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor.md`
 **Task:** `FPR-1`
-**Commit SHA:** Pending until task completion. If review fixes add commits, update to the latest task commit and note the reviewed range below.
+**Commit SHA:** `99c8a09` for implementation. Metadata update is recorded separately after the implementation commit.
 
 ## Starting Context
 
@@ -16,4 +16,23 @@ The files above are starting points only. Inspect any additional files needed to
 
 ## Completion Updates
 
-The implementer updates this section before review with the final task commit SHA, reviewed commit range if relevant, files created, files modified, additional relevant files, and verification commands/results.
+Implemented FPR-1.
+
+Files created:
+- `src/transports/http/json-rpc.ts`
+- `tests/json-rpc.test.ts`
+
+Files modified:
+- `package.json`
+
+Additional relevant files:
+- `docs/superfastpowers/plans/FPR/2026-06-11-feature-package-refactor/tasks/FPR-1/task.md`
+
+Verification commands/results:
+- `npm test -- --test-name-pattern=jsonRpc`: PASS
+- `./node_modules/.bin/tsc --noEmit`: PASS
+
+Implementation notes:
+- Added a `test` script using Node's built-in test runner with `ts-node/esm`.
+- Added JSON-RPC request/response types plus `jsonRpcSuccess` and `jsonRpcError`.
+- `jsonRpcError` omits `data` when the caller does not provide it.
