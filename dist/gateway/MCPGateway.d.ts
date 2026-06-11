@@ -20,7 +20,8 @@
 import { SearchEngine } from "../search/SearchEngine.js";
 import { JobManager } from "../jobs/JobManager.js";
 import { ConnectionManager } from "../connections.js";
-import { ResponseStore, ResponseShield } from "../response-store.js";
+import { ResponseShield } from "../responses/ResponseShield.js";
+import { ResponseStore } from "../responses/ResponseStore.js";
 import { GatewayToolService } from "../tools/GatewayToolService.js";
 import { ProjectRegistry } from "../projects/ProjectRegistry.js";
 import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";

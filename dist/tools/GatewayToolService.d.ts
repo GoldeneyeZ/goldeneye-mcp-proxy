@@ -1,7 +1,8 @@
 import type { ConnectionManager } from "../connections.js";
 import type { JobManager } from "../jobs/JobManager.js";
 import type { ProjectRegistry } from "../projects/ProjectRegistry.js";
-import type { ResponseShield, ResponseStore } from "../response-store.js";
+import type { ResponseShield } from "../responses/ResponseShield.js";
+import type { ResponseStore } from "../responses/ResponseStore.js";
 import type { SearchEngine } from "../search/SearchEngine.js";
 export interface GatewayToolServiceDeps {
     searchEngine: SearchEngine;
