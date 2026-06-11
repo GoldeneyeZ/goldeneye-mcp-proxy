@@ -6,7 +6,11 @@
 
 ## Starting Context
 
-- The task file lists the implementation starting points.
+- `src/gateway.ts`: Starting point from task file entry: Move/Modify: `src/gateway.ts` -> `src/gateway/MCPGateway.ts`
+- `src/connections.ts`: Starting point from task file entry: Move/Modify: `src/connections.ts` -> `src/upstreams/ConnectionManager.ts`
+- `src/upstreams/environment.ts`: Starting point from task file entry: Create: `src/upstreams/environment.ts`
+- `src/index.ts`: Starting point from task file entry: Modify: `src/index.ts`
+- `src`: Starting point from task file entry: Modify: imports across `src`
 
 ## Open Context Rule
 

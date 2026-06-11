@@ -6,7 +6,12 @@
 
 ## Starting Context
 
-- The task file lists the implementation starting points.
+- `src/response-store.ts`: Starting point from task file entry: Move/Modify: `src/response-store.ts` -> `src/responses/ResponseStore.ts`
+- `src/responses/ResponseShield.ts`: Starting point from task file entry: Create: `src/responses/ResponseShield.ts`
+- `src/responses/response-slicing.ts`: Starting point from task file entry: Create: `src/responses/response-slicing.ts`
+- `src/responses/response-truncation.ts`: Starting point from task file entry: Create: `src/responses/response-truncation.ts`
+- `tests/response-truncation.test.ts`: Starting point from task file entry: Create: `tests/response-truncation.test.ts`
+- `Modify: imports in gateway/tool service files`: Starting point from task file entry: Modify: imports in gateway/tool service files
 
 ## Open Context Rule
 

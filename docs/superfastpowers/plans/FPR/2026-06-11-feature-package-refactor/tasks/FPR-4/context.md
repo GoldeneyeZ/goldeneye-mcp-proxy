@@ -6,7 +6,10 @@
 
 ## Starting Context
 
-- The task file lists the implementation starting points.
+- `src/tools/GatewayToolService.ts`: Starting point from task file entry: Create: `src/tools/GatewayToolService.ts`
+- `src/gateway/project-args.ts`: Starting point from task file entry: Create: `src/gateway/project-args.ts`
+- `tests/gateway-tool-service.test.ts`: Starting point from task file entry: Create: `tests/gateway-tool-service.test.ts`
+- `src/gateway/MCPGateway.ts`: Starting point from task file entry: Modify: `src/gateway/MCPGateway.ts` or `src/gateway.ts` if Task 6 has not moved it yet
 
 ## Open Context Rule
 

@@ -6,7 +6,12 @@
 
 ## Starting Context
 
-- The task file lists the implementation starting points.
+- `src/tools/gateway-tool-schemas.ts`: Starting point from task file entry: Create: `src/tools/gateway-tool-schemas.ts`
+- `src/transports/http/cors.ts`: Starting point from task file entry: Create: `src/transports/http/cors.ts`
+- `src/transports/http/request-router.ts`: Starting point from task file entry: Create: `src/transports/http/request-router.ts`
+- `src/http-server.ts`: Starting point from task file entry: Move/Modify: `src/http-server.ts` -> `src/transports/http/HttpMcpServer.ts`
+- `src/index.ts`: Starting point from task file entry: Modify: `src/index.ts`
+- `src/gateway/MCPGateway.ts`: Starting point from task file entry: Modify: `src/gateway/MCPGateway.ts` or `src/gateway.ts`
 
 ## Open Context Rule
 

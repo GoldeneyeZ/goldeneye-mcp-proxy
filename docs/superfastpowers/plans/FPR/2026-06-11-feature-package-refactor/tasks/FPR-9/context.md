@@ -6,7 +6,9 @@
 
 ## Starting Context
 
-- The task file lists the implementation starting points.
+- `src/index.ts`: Starting point from task file entry: Modify: `src/index.ts`
+- `Delete: stale root files left after compatibility period`: Starting point from task file entry: Delete: stale root files left after compatibility period
+- `README.md`: Starting point from task file entry: Modify: `README.md` only if command names or documented file paths changed
 
 ## Open Context Rule
 

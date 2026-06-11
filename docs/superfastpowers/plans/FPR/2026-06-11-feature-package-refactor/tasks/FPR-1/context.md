@@ -6,7 +6,9 @@
 
 ## Starting Context
 
-- The task file lists the implementation starting points.
+- `package.json`: Starting point from task file entry: Modify: `package.json`
+- `src/transports/http/json-rpc.ts`: Starting point from task file entry: Create: `src/transports/http/json-rpc.ts`
+- `tests/json-rpc.test.ts`: Starting point from task file entry: Create: `tests/json-rpc.test.ts`
 
 ## Open Context Rule
 

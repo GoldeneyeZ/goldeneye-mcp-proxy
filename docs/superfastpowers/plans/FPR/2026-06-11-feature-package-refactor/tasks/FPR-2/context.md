@@ -6,7 +6,16 @@
 
 ## Starting Context
 
-- The task file lists the implementation starting points.
+- `src/types.ts`: Starting point from task file entry: Move: `src/types.ts` -> `src/shared/types.ts`
+- `src/config.ts`: Starting point from task file entry: Move: `src/config.ts` -> `src/config/Config.ts`
+- `src/lazy-config.ts`: Starting point from task file entry: Move: `src/lazy-config.ts` -> `src/config/lazy-config.ts`
+- `src/catalog-snapshot.ts`: Starting point from task file entry: Move: `src/catalog-snapshot.ts` -> `src/catalog/CatalogSnapshotManager.ts`
+- `src/jobs.ts`: Starting point from task file entry: Move: `src/jobs.ts` -> `src/jobs/JobManager.ts`
+- `src/search.ts`: Starting point from task file entry: Move: `src/search.ts` -> `src/search/SearchEngine.ts`
+- `src/projectRegistry.ts`: Starting point from task file entry: Move: `src/projectRegistry.ts` -> `src/projects/ProjectRegistry.ts`
+- `src/connection-state.ts`: Starting point from task file entry: Move: `src/connection-state.ts` -> `src/upstreams/connection-state.ts`
+- `src/resource-monitor.ts`: Starting point from task file entry: Move: `src/resource-monitor.ts` -> `src/upstreams/resource-monitor.ts`
+- `src/index.ts`: Starting point from task file entry: Modify: `src/index.ts`, `src/gateway.ts`, `src/http-server.ts`, `src/handlers.ts`, `src/connections.ts`, moved files' imports
 
 ## Open Context Rule
 

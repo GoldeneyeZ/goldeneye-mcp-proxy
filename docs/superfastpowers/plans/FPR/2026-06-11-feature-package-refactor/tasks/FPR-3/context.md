@@ -6,7 +6,9 @@
 
 ## Starting Context
 
-- The task file lists the implementation starting points.
+- `src/search/schema-fields.ts`: Starting point from task file entry: Create: `src/search/schema-fields.ts`
+- `tests/schema-fields.test.ts`: Starting point from task file entry: Create: `tests/schema-fields.test.ts`
+- `src/search/SearchEngine.ts`: Starting point from task file entry: Modify: `src/search/SearchEngine.ts`
 
 ## Open Context Rule
 

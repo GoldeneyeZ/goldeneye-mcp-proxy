@@ -6,7 +6,10 @@
 
 ## Starting Context
 
-- The task file lists the implementation starting points.
+- `src/tools/stdio-tool-registration.ts`: Starting point from task file entry: Create: `src/tools/stdio-tool-registration.ts`
+- `src/gateway/gateway-status.ts`: Starting point from task file entry: Create: `src/gateway/gateway-status.ts`
+- `src/handlers.ts`: Starting point from task file entry: Modify: `src/handlers.ts` or remove it after imports are updated
+- `src/gateway.ts`: Starting point from task file entry: Modify: `src/gateway.ts` or `src/gateway/MCPGateway.ts`
 
 ## Open Context Rule
 
