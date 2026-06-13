@@ -27,12 +27,16 @@
 
 import { MCPGateway } from "./gateway/MCPGateway.js";
 import { HttpMcpServer } from "./transports/http/HttpMcpServer.js";
+import { SkillMigrationService } from "./skills/SkillMigrationService.js";
 
 // Parse CLI arguments
 let configPath: string | undefined;
 let port: number | undefined;
 let discoverMode = false;
 let helpMode = false;
+let deferCodexSkills = false;
+let restoreCodexSkills = false;
+let dryRun = false;
 
 const args = process.argv.slice(2);
 for (let i = 0; i < args.length; i++) {
@@ -42,6 +46,12 @@ for (let i = 0; i < args.length; i++) {
     port = 8767;
   } else if (args[i] === "--discover") {
     discoverMode = true;
+  } else if (args[i] === "--defer-codex-skills") {
+    deferCodexSkills = true;
+  } else if (args[i] === "--restore-codex-skills") {
+    restoreCodexSkills = true;
+  } else if (args[i] === "--dry-run") {
+    dryRun = true;
   } else if (args[i] === "--help" || args[i] === "-h") {
     helpMode = true;
   } else if (!args[i].startsWith("--")) {
@@ -51,6 +61,8 @@ for (let i = 0; i < args.length; i++) {
 
 if (helpMode) {
   printUsage();
+} else if (deferCodexSkills || restoreCodexSkills) {
+  runSkillMigration(deferCodexSkills, restoreCodexSkills, dryRun);
 } else if (discoverMode) {
   runDiscovery(configPath);
 } else if (port) {
@@ -69,13 +81,36 @@ function printUsage(): void {
   goldeneye-mcp-proxy --port <port> [path-to-config.json]
   goldeneye-mcp-proxy --daemon [path-to-config.json]
   goldeneye-mcp-proxy --discover [path-to-config.json]
+  goldeneye-mcp-proxy --defer-codex-skills [--dry-run]
+  goldeneye-mcp-proxy --restore-codex-skills [--dry-run]
   goldeneye-mcp-proxy --help
 
 Options:
   --port <port>  Start HTTP daemon mode on the given port.
   --daemon       Start HTTP daemon mode on port 8767.
   --discover     Force catalog discovery, save snapshots, and exit.
+  --defer-codex-skills    Rename ~/.codex/skills to ~/.codex/skills.deferred.
+  --restore-codex-skills  Restore ~/.codex/skills.deferred to ~/.codex/skills.
+  --dry-run       Show migration changes without mutating files.
   --help, -h     Print this help text and exit.`);
+}
+
+function runSkillMigration(deferCodexSkills: boolean, restoreCodexSkills: boolean, dryRun: boolean): void {
+  if (deferCodexSkills && restoreCodexSkills) {
+    console.error("Use only one of --defer-codex-skills or --restore-codex-skills");
+    process.exit(1);
+  }
+
+  const service = new SkillMigrationService();
+  try {
+    const result = deferCodexSkills
+      ? service.deferCodexSkills({ dryRun })
+      : service.restoreCodexSkills({ dryRun });
+    console.log(JSON.stringify(result, null, 2));
+  } catch (error) {
+    console.error((error as Error).message);
+    process.exit(1);
+  }
 }
 
 function startStdio(configPath?: string): void {
