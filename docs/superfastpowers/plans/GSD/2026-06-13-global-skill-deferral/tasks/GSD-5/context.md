@@ -2,7 +2,7 @@
 
 **Plan:** `docs/superfastpowers/plans/GSD/2026-06-13-global-skill-deferral.md`
 **Task:** `GSD-5`
-**Commit SHA:** Pending until task completion. If review fixes add commits, update to the latest task commit and note the reviewed range below.
+**Commit SHA:** `d6339c3`. If review fixes add commits, update to the latest task commit and note the reviewed range below.
 
 ## Starting Context
 
@@ -19,6 +19,25 @@ The files above are starting points only. Inspect any additional files needed to
 
 ## Completion Updates
 
-The implementer updates this section before review with the final task commit
-SHA, reviewed commit range if relevant, files created, files modified,
-additional relevant files, and verification commands/results.
+Registered `skills.*` tools in HTTP and stdio transports and wired skill services
+through the gateway and daemon.
+
+Files created:
+- `src/tools/skill-tool-schemas.ts`
+- `tests/skill-tools-router.test.ts`
+
+Files modified:
+- `src/tools/stdio-tool-registration.ts`
+- `src/transports/http/request-router.ts`
+- `src/transports/http/HttpMcpServer.ts`
+- `src/gateway/MCPGateway.ts`
+- `src/index.ts`
+
+Additional relevant files:
+- `dist/` changed from `npm run build`; generated output intentionally left for
+  the final build artifact task.
+
+Verification:
+- `npm test -- tests/skill-tools-router.test.ts`: PASS.
+- `npm test`: PASS.
+- `npm run build`: PASS.
