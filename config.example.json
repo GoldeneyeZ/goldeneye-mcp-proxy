@@ -1,5 +1,16 @@
 {
   "_note": "Copy this file to config.json and fill in your own values. This file is safe to commit.",
+  "_skills": {
+    "sources": [
+      {
+        "label": "team",
+        "path": "/path/to/global/team-skills",
+        "enabled": false
+      }
+    ],
+    "maxResourceBytes": 131072,
+    "maxResourceEntries": 50
+  },
   "repeato-backend-mcp-server": {
     "type": "local",
     "command": [

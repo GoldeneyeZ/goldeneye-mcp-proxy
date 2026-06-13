@@ -8,7 +8,7 @@ upstream MCP servers. Combines **schema deferral** (from
 ## What it does
 
 Instead of your AI client loading 40-70K tokens of tool schemas from 12+ MCP servers at
-startup, it loads **6 tool definitions from this proxy** (~375 tokens). The proxy then:
+startup, it loads compact gateway tool definitions from this proxy. The proxy then:
 
 1. **Schema deferral** — Tools are discovered via BM25 search (`gateway.search`), full
    schemas loaded on demand (`gateway.describe`), and executed through the proxy
@@ -31,6 +31,11 @@ startup, it loads **6 tool definitions from this proxy** (~375 tokens). The prox
    The actual server process is spawned only when you first invoke a tool on that server.
    After 5 minutes of inactivity, the idle monitor auto-disconnects it — freeing RAM
    and CPU without losing searchability.
+
+5. **Global skill deferral** — Global Codex skills can be moved from
+   `~/.codex/skills` to `~/.codex/skills.deferred` and exposed through
+   `skills.search`, `skills.pull`, and `skills.read_resource`. Skill bodies and
+   support files are loaded only when the agent asks for them.
 
 ---
 
@@ -117,6 +122,37 @@ Catalog snapshots are stored in `~/.cache/goldeneye-mcp-proxy/catalogs/`.
 | `gateway.invoke_async` | Queue tool for async execution | Returns jobId immediately |
 | `gateway.invoke_status` | Poll async job status | Minimal response |
 | `gateway.get_result` | Paginate through truncated responses | Offset/limit/fields/search |
+
+## Skill Gateway Tools
+
+| Tool | Purpose |
+|------|---------|
+| `skills.search` | Search global deferred skills by name, description, source, path, and headings |
+| `skills.pull` | Load one full `SKILL.md` plus metadata and a bounded resource map |
+| `skills.read_resource` | Read one support file for a pulled skill |
+| `skills.status` | Inspect indexed skill roots, invalid skills, and Codex migration state |
+
+## Deferring Global Codex Skills
+
+Run a dry-run first:
+
+```bash
+goldeneye-mcp-proxy --defer-codex-skills --dry-run
+```
+
+Then migrate:
+
+```bash
+goldeneye-mcp-proxy --defer-codex-skills
+```
+
+This renames `~/.codex/skills` to `~/.codex/skills.deferred` and leaves a marker
+README in `~/.codex/skills`, so Codex stops eagerly loading those global skills.
+Rollback is available with:
+
+```bash
+goldeneye-mcp-proxy --restore-codex-skills
+```
 
 ## Model Workflow
 

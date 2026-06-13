@@ -231,6 +231,21 @@ gateway.get_result(ref: "r3", search: "error")
 
 ---
 
+## Lazy Global Skills
+
+When you need specialized instructions, search the skill gateway first instead of
+assuming every skill is already in context.
+
+1. `skills.search({ query: "code review" })`
+2. `skills.pull({ id: "codex-deferred::caveman/caveman-review" })`
+3. `skills.read_resource({ id, path })` only when the pulled skill references a
+   specific support file you need.
+
+Do not call `skills.read_resource` for every listed resource. Pull only the files
+that the selected skill says are relevant to the current task.
+
+---
+
 ## Lazy Loading (No Manual Steps Needed)
 
 The proxy uses on-demand process management by default:
