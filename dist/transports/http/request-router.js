@@ -1,12 +1,16 @@
 import { GatewayToolError } from "../../tools/GatewayToolService.js";
 import { GATEWAY_TOOL_SCHEMAS } from "../../tools/gateway-tool-schemas.js";
+import { SkillGatewayError } from "../../skills/SkillGatewayService.js";
+import { SKILL_TOOL_SCHEMAS } from "../../tools/skill-tool-schemas.js";
 import { jsonRpcError, jsonRpcSuccess } from "./json-rpc.js";
 const MCP_PROTOCOL_VERSION = "2024-11-05";
 export class HttpMcpRequestRouter {
     toolService;
+    skillService;
     initialized = false;
-    constructor(toolService) {
+    constructor(toolService, skillService) {
         this.toolService = toolService;
+        this.skillService = skillService;
     }
     async route(request) {
         const id = request.id ?? null;
@@ -37,10 +41,11 @@ export class HttpMcpRequestRouter {
         });
     }
     handleToolsList(id) {
+        const tools = this.skillService ? [...GATEWAY_TOOL_SCHEMAS, ...SKILL_TOOL_SCHEMAS] : GATEWAY_TOOL_SCHEMAS;
         return jsonRpcSuccess(id, {
-            tools: GATEWAY_TOOL_SCHEMAS.map((tool) => ({
+            tools: tools.map((tool) => ({
                 name: tool.name,
-                title: tool.name.replace("gateway.", ""),
+                title: tool.name.includes(".") ? tool.name.split(".")[1] : tool.name,
                 description: tool.description,
                 inputSchema: tool.inputSchema,
             })),
@@ -84,12 +89,34 @@ export class HttpMcpRequestRouter {
                         fields: args.fields,
                         search: args.search ? String(args.search) : undefined,
                     })));
+                case "skills.search":
+                    if (!this.skillService)
+                        return jsonRpcError(id, -32602, "Skill gateway is not available");
+                    return jsonRpcSuccess(id, toContent(this.skillService.search({
+                        query: String(args.query || ""),
+                        limit: Number(args.limit) || 10,
+                    })));
+                case "skills.pull":
+                    if (!this.skillService)
+                        return jsonRpcError(id, -32602, "Skill gateway is not available");
+                    return jsonRpcSuccess(id, toContent(this.skillService.pull({ id: String(args.id || "") })));
+                case "skills.read_resource":
+                    if (!this.skillService)
+                        return jsonRpcError(id, -32602, "Skill gateway is not available");
+                    return jsonRpcSuccess(id, toContent(this.skillService.readResource({
+                        id: String(args.id || ""),
+                        path: String(args.path || ""),
+                    })));
+                case "skills.status":
+                    if (!this.skillService)
+                        return jsonRpcError(id, -32602, "Skill gateway is not available");
+                    return jsonRpcSuccess(id, toContent(this.skillService.status()));
                 default:
                     return jsonRpcError(id, -32602, `Unknown tool: ${toolName}. Available tools: gateway.search, gateway.describe, gateway.invoke, gateway.invoke_async, gateway.invoke_status, gateway.get_result`);
             }
         }
         catch (error) {
-            if (error instanceof GatewayToolError) {
+            if (error instanceof GatewayToolError || error instanceof SkillGatewayError) {
                 return jsonRpcError(id, error.code, error.message);
             }
             return jsonRpcError(id, -32000, error.message);

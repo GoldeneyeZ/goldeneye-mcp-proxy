@@ -27,6 +27,7 @@ import { ProjectRegistry } from "../projects/ProjectRegistry.js";
 import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
 import { ResourceMonitor } from "../upstreams/ResourceMonitor.js";
 import type { StatusHolder } from "./gateway-status.js";
+import { SkillGatewayService } from "../skills/SkillGatewayService.js";
 export declare class MCPGateway {
     private config;
     private searchEngine;
@@ -39,6 +40,10 @@ export declare class MCPGateway {
     private resourceMonitor;
     private statusHolder;
     private toolService;
+    private skillRegistry;
+    private skillSearchEngine;
+    private skillResourcePolicy;
+    private skillService;
     private lastReloadTimestamp;
     private pendingReload;
     private lazyMode;
@@ -86,6 +91,7 @@ export declare class MCPGateway {
         snapshotManager: CatalogSnapshotManager;
         resourceMonitor: ResourceMonitor;
         toolService: GatewayToolService;
+        skillService: SkillGatewayService;
     };
     /** Graceful shutdown — stop watching, drain jobs, disconnect all */
     shutdown(): Promise<void>;

@@ -8,5 +8,10 @@
  * │  3. Store types — response shielding + pagination refs         │
  * └─────────────────────────────────────────────────────────────────┘
  */
-export {};
+export function isUpstreamConfig(value) {
+    if (!value || typeof value !== "object")
+        return false;
+    const type = value.type;
+    return type === "local" || type === "remote";
+}
 //# sourceMappingURL=types.js.map

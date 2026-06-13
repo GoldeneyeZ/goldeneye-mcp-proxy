@@ -8,6 +8,7 @@
  * │  3. Store types — response shielding + pagination refs         │
  * └─────────────────────────────────────────────────────────────────┘
  */
+import type { SkillGatewayConfig } from "../skills/types.js";
 /**
  * Config for a single upstream MCP server.
  * Mirrors opencode.json MCP block format so you can copy entries directly.
@@ -28,10 +29,13 @@ export interface UpstreamConfig {
     /** Enable lazy loading (connect on demand) for this server */
     lazy?: LazyConfig;
 }
-/** Top-level config: server key → upstream config */
-export interface GatewayConfig {
-    [serverKey: string]: UpstreamConfig;
-}
+/** Top-level config: server key → upstream config, plus reserved gateway sections */
+export type GatewayConfig = {
+    _skills?: SkillGatewayConfig;
+} & {
+    [serverKey: string]: UpstreamConfig | SkillGatewayConfig | undefined;
+};
+export declare function isUpstreamConfig(value: unknown): value is UpstreamConfig;
 /** A registered project for codegraph auto-injection */
 export interface CodeGraphProject {
     name: string;

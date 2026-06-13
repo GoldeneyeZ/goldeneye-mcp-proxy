@@ -18,7 +18,11 @@
  * Tools become available in the search index as each server connects.
  */
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { isUpstreamConfig } from "../shared/types.js";
 import { Config } from "../config/Config.js";
+import { resolveSkillConfig } from "../config/skill-config.js";
 import { SearchEngine } from "../search/SearchEngine.js";
 import { JobManager } from "../jobs/JobManager.js";
 import { ConnectionManager } from "../upstreams/ConnectionManager.js";
@@ -31,6 +35,10 @@ import { normalizeLazyConfig } from "../config/lazy-config.js";
 import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
 import { ResourceMonitor } from "../upstreams/ResourceMonitor.js";
 import { injectProjectPath } from "./project-args.js";
+import { SkillRegistry } from "../skills/SkillRegistry.js";
+import { SkillSearchEngine } from "../skills/SkillSearchEngine.js";
+import { SkillResourcePolicy } from "../skills/SkillResourcePolicy.js";
+import { SkillGatewayService } from "../skills/SkillGatewayService.js";
 export class MCPGateway {
     config;
     searchEngine;
@@ -43,6 +51,10 @@ export class MCPGateway {
     resourceMonitor;
     statusHolder;
     toolService;
+    skillRegistry;
+    skillSearchEngine;
+    skillResourcePolicy;
+    skillService;
     lastReloadTimestamp = Date.now();
     pendingReload = false;
     lazyMode;
@@ -57,7 +69,7 @@ export class MCPGateway {
         this.snapshotManager = new CatalogSnapshotManager();
         this.resourceMonitor = new ResourceMonitor();
         // Wire lazy-loading dependencies into ConnectionManager
-        this.connections.setConfigProvider(() => this.config.getAll());
+        this.connections.setConfigProvider(() => getUpstreamConfigMap(this.config.getAll()));
         this.connections.setSnapshotManager(this.snapshotManager);
         this.connections.setResourceMonitor(this.resourceMonitor);
         this.responseStore = new ResponseStore();
@@ -95,7 +107,24 @@ export class MCPGateway {
             responseShield: this.responseShield,
             projectRegistry: this.projectRegistry,
         });
-        this.server = createServer(this.toolService, statusHolder);
+        const skillConfig = resolveSkillConfig(this.config.getAll());
+        this.skillRegistry = new SkillRegistry(skillConfig);
+        this.skillSearchEngine = new SkillSearchEngine();
+        this.skillResourcePolicy = new SkillResourcePolicy({
+            maxResourceBytes: skillConfig.maxResourceBytes,
+            maxResourceEntries: skillConfig.maxResourceEntries,
+        });
+        this.skillService = new SkillGatewayService({
+            registry: this.skillRegistry,
+            searchEngine: this.skillSearchEngine,
+            resourcePolicy: this.skillResourcePolicy,
+            migrationPaths: {
+                codexSkillsPath: join(homedir(), ".codex", "skills"),
+                deferredPath: join(homedir(), ".codex", "skills.deferred"),
+            },
+        });
+        this.skillService.refresh();
+        this.server = createServer(this.toolService, statusHolder, this.skillService);
         // Wire up the job manager's execute function
         this.jobManager.setExecuteJob(async (job) => {
             const separatorIndex = job.toolId.toString().indexOf("::");
@@ -128,9 +157,10 @@ export class MCPGateway {
      */
     async connectAll(forceConnect = false) {
         const allConfig = this.config.getAll();
+        const upstreamConfig = getUpstreamConfigMap(allConfig);
         const eagerKeys = [];
         const lazyKeys = [];
-        for (const [serverKey, config] of Object.entries(allConfig)) {
+        for (const [serverKey, config] of Object.entries(upstreamConfig)) {
             if (config.enabled === false)
                 continue;
             const lazy = normalizeLazyConfig(config.lazy);
@@ -142,7 +172,7 @@ export class MCPGateway {
             }
         }
         // Eager-connect non-lazy servers (existing behavior)
-        const eagerPromises = eagerKeys.map((serverKey) => this.connections.connectWithRetry(serverKey, allConfig[serverKey]).catch((err) => {
+        const eagerPromises = eagerKeys.map((serverKey) => this.connections.connectWithRetry(serverKey, upstreamConfig[serverKey]).catch((err) => {
             console.error(`  [${serverKey}] FAILED: ${err.message}`);
         }));
         await Promise.allSettled(eagerPromises);
@@ -166,7 +196,7 @@ export class MCPGateway {
         const toolCount = this.searchEngine.getTools().length;
         const connectedCount = this.connections.getConnectedServers().length;
         const lazyCount = lazyKeys.length;
-        console.error(`  [gateway] Ready: ${toolCount} tools (${connectedCount} connected + ${lazyCount} lazy) from ${Object.keys(allConfig).length} servers`);
+        console.error(`  [gateway] Ready: ${toolCount} tools (${connectedCount} connected + ${lazyCount} lazy) from ${Object.keys(upstreamConfig).length} servers`);
         // Start idle monitor if any lazy servers exist
         // (both stdio and daemon modes need this)
         if (lazyCount > 0) {
@@ -212,8 +242,10 @@ export class MCPGateway {
     handleConfigChange(oldConfig, newConfig) {
         this.pendingReload = true;
         console.error("  [gateway] Config change detected, reloading...");
-        const oldKeys = new Set(Object.keys(oldConfig));
-        const newKeys = new Set(Object.keys(newConfig));
+        const oldUpstreamConfig = getUpstreamConfigMap(oldConfig);
+        const newUpstreamConfig = getUpstreamConfigMap(newConfig);
+        const oldKeys = new Set(Object.keys(oldUpstreamConfig));
+        const newKeys = new Set(Object.keys(newUpstreamConfig));
         const toRemove = [...oldKeys].filter((k) => !newKeys.has(k));
         const toAdd = [...newKeys].filter((k) => !oldKeys.has(k));
         const toCheck = [...newKeys].filter((k) => oldKeys.has(k));
@@ -226,8 +258,8 @@ export class MCPGateway {
             }
             // Check for changes in existing servers
             for (const key of toCheck) {
-                const oldC = oldConfig[key];
-                const newC = newConfig[key];
+                const oldC = oldUpstreamConfig[key];
+                const newC = newUpstreamConfig[key];
                 // Disabled → still disabled: skip
                 if (oldC?.enabled === false && newC?.enabled === false)
                     continue;
@@ -292,7 +324,7 @@ export class MCPGateway {
             }
             // Add new servers
             for (const key of toAdd) {
-                const config = newConfig[key];
+                const config = newUpstreamConfig[key];
                 if (config?.enabled !== false) {
                     const lazy = normalizeLazyConfig(config.lazy);
                     if (lazy.enabled && !lazy.prewarm) {
@@ -320,6 +352,7 @@ export class MCPGateway {
                     }
                 }
             }
+            this.skillService.refresh();
             this.searchEngine.warmup();
             this.pendingReload = false;
             this.lastReloadTimestamp = Date.now();
@@ -343,6 +376,7 @@ export class MCPGateway {
             snapshotManager: this.snapshotManager,
             resourceMonitor: this.resourceMonitor,
             toolService: this.toolService,
+            skillService: this.skillService,
         };
     }
     /** Graceful shutdown — stop watching, drain jobs, disconnect all */
@@ -356,5 +390,14 @@ export class MCPGateway {
         await this.server.close();
         console.error("  [gateway] Shutdown complete");
     }
+}
+function getUpstreamConfigMap(config) {
+    const upstreams = {};
+    for (const [key, value] of Object.entries(config)) {
+        if (isUpstreamConfig(value)) {
+            upstreams[key] = value;
+        }
+    }
+    return upstreams;
 }
 //# sourceMappingURL=MCPGateway.js.map

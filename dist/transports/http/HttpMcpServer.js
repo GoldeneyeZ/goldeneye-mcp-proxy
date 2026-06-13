@@ -8,11 +8,11 @@ export class HttpMcpServer {
     httpServer;
     router;
     port;
-    constructor(searchEngine, connections, toolService, port) {
+    constructor(searchEngine, connections, toolService, port, skillService) {
         this.searchEngine = searchEngine;
         this.connections = connections;
         this.port = port || 8767;
-        this.router = new HttpMcpRequestRouter(toolService);
+        this.router = new HttpMcpRequestRouter(toolService, skillService);
     }
     async start() {
         return new Promise((resolve) => {

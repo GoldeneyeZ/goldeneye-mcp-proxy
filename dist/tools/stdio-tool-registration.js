@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { GatewayToolError } from "./GatewayToolService.js";
-export function createServer(toolService, statusHolder) {
+export function createServer(toolService, statusHolder, skillService) {
     const server = new McpServer({ name: "goldeneye-mcp-proxy", version: "1.0.0" }, { capabilities: { tools: {} } });
     server.registerTool("gateway.search", {
         title: "Search MCP Tools",
@@ -70,6 +70,8 @@ export function createServer(toolService, statusHolder) {
             search: z.string().optional().describe("Filter items containing this text (case-insensitive)"),
         },
     }, async ({ ref, offset, limit, fields, search }) => runTool(() => toolService.getResult({ ref, offset, limit, fields, search })));
+    if (skillService)
+        registerSkillTools(server, skillService);
     if (statusHolder)
         registerStatusTool(server, statusHolder);
     return server;
@@ -113,5 +115,35 @@ function registerStatusTool(server, statusHolder) {
             defaultProject: statusHolder.getDefaultProject(),
         });
     });
+}
+function registerSkillTools(server, skillService) {
+    server.registerTool("skills.search", {
+        title: "Search Deferred Skills",
+        description: "Search global deferred skills. Returns compact metadata only.",
+        inputSchema: {
+            query: z.string().optional().describe("Search query"),
+            limit: z.number().optional().describe("Max results to return"),
+        },
+    }, async ({ query, limit }) => runTool(() => skillService.search({ query, limit })));
+    server.registerTool("skills.pull", {
+        title: "Pull Deferred Skill",
+        description: "Return one full SKILL.md plus metadata and resource map.",
+        inputSchema: {
+            id: z.string().describe("Skill ID from skills.search"),
+        },
+    }, async ({ id }) => runTool(() => skillService.pull({ id })));
+    server.registerTool("skills.read_resource", {
+        title: "Read Skill Resource",
+        description: "Read one support file from a deferred skill.",
+        inputSchema: {
+            id: z.string().describe("Skill ID from skills.search"),
+            path: z.string().describe("Relative resource path"),
+        },
+    }, async ({ id, path }) => runTool(() => skillService.readResource({ id, path })));
+    server.registerTool("skills.status", {
+        title: "Get Skill Gateway Status",
+        description: "Report indexed skill roots, invalid skills, and migration status.",
+        inputSchema: {},
+    }, async () => runTool(() => skillService.status()));
 }
 //# sourceMappingURL=stdio-tool-registration.js.map
