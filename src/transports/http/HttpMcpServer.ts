@@ -2,6 +2,7 @@ import http from "node:http";
 import type { ConnectionManager } from "../../upstreams/ConnectionManager.js";
 import type { SearchEngine } from "../../search/SearchEngine.js";
 import type { GatewayToolService } from "../../tools/GatewayToolService.js";
+import type { SkillGatewayService } from "../../skills/SkillGatewayService.js";
 import { applyCorsHeaders, handleCorsPreflight } from "./cors.js";
 import { jsonRpcError, type JsonRpcRequest } from "./json-rpc.js";
 import { HttpMcpRequestRouter } from "./request-router.js";
@@ -16,9 +17,10 @@ export class HttpMcpServer {
     private readonly connections: ConnectionManager,
     toolService: GatewayToolService,
     port?: number,
+    skillService?: SkillGatewayService,
   ) {
     this.port = port || 8767;
-    this.router = new HttpMcpRequestRouter(toolService);
+    this.router = new HttpMcpRequestRouter(toolService, skillService);
   }
 
   async start(): Promise<void> {

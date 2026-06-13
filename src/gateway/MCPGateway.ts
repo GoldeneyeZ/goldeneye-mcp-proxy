@@ -19,8 +19,11 @@
  */
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { isUpstreamConfig, type GatewayConfig, type UpstreamConfig } from "../shared/types.js";
 import { Config } from "../config/Config.js";
+import { resolveSkillConfig } from "../config/skill-config.js";
 import { SearchEngine } from "../search/SearchEngine.js";
 import { JobManager } from "../jobs/JobManager.js";
 import { ConnectionManager } from "../upstreams/ConnectionManager.js";
@@ -34,6 +37,10 @@ import { CatalogSnapshotManager } from "../catalog/CatalogSnapshotManager.js";
 import { ResourceMonitor } from "../upstreams/ResourceMonitor.js";
 import type { StatusHolder } from "./gateway-status.js";
 import { injectProjectPath } from "./project-args.js";
+import { SkillRegistry } from "../skills/SkillRegistry.js";
+import { SkillSearchEngine } from "../skills/SkillSearchEngine.js";
+import { SkillResourcePolicy } from "../skills/SkillResourcePolicy.js";
+import { SkillGatewayService } from "../skills/SkillGatewayService.js";
 
 export class MCPGateway {
   private config: Config;
@@ -47,6 +54,10 @@ export class MCPGateway {
   private resourceMonitor: ResourceMonitor;
   private statusHolder: StatusHolder;
   private toolService: GatewayToolService;
+  private skillRegistry: SkillRegistry;
+  private skillSearchEngine: SkillSearchEngine;
+  private skillResourcePolicy: SkillResourcePolicy;
+  private skillService: SkillGatewayService;
   private lastReloadTimestamp: number = Date.now();
   private pendingReload: boolean = false;
   private lazyMode: boolean;
@@ -108,7 +119,25 @@ export class MCPGateway {
       projectRegistry: this.projectRegistry,
     });
 
-    this.server = createServer(this.toolService, statusHolder);
+    const skillConfig = resolveSkillConfig(this.config.getAll());
+    this.skillRegistry = new SkillRegistry(skillConfig);
+    this.skillSearchEngine = new SkillSearchEngine();
+    this.skillResourcePolicy = new SkillResourcePolicy({
+      maxResourceBytes: skillConfig.maxResourceBytes,
+      maxResourceEntries: skillConfig.maxResourceEntries,
+    });
+    this.skillService = new SkillGatewayService({
+      registry: this.skillRegistry,
+      searchEngine: this.skillSearchEngine,
+      resourcePolicy: this.skillResourcePolicy,
+      migrationPaths: {
+        codexSkillsPath: join(homedir(), ".codex", "skills"),
+        deferredPath: join(homedir(), ".codex", "skills.deferred"),
+      },
+    });
+    this.skillService.refresh();
+
+    this.server = createServer(this.toolService, statusHolder, this.skillService);
 
     // Wire up the job manager's execute function
     this.jobManager.setExecuteJob(async (job) => {
@@ -356,6 +385,7 @@ export class MCPGateway {
         }
       }
 
+      this.skillService.refresh();
       this.searchEngine.warmup();
       this.pendingReload = false;
       this.lastReloadTimestamp = Date.now();
@@ -382,6 +412,7 @@ export class MCPGateway {
       snapshotManager: this.snapshotManager,
       resourceMonitor: this.resourceMonitor,
       toolService: this.toolService,
+      skillService: this.skillService,
     };
   }
 

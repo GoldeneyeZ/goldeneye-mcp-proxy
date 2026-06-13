@@ -117,6 +117,7 @@ async function startDaemon(configPath?: string, daemonPort?: number): Promise<vo
     services.connections,
     services.toolService,
     daemonPort,
+    services.skillService,
   );
 
   // Register signal handlers now that httpServer is defined
