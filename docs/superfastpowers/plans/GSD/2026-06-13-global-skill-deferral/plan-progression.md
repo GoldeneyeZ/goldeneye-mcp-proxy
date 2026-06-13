@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-06-13 17:20
+Last updated: 2026-06-13 17:22
 
 ## Task 1: Skill Types, Frontmatter, And Config
 
@@ -32,11 +32,11 @@ Last updated: 2026-06-13 17:20
 ## Task 4: Skill Gateway Service
 
 - Path: `docs/superfastpowers/plans/GSD/2026-06-13-global-skill-deferral/tasks/GSD-4/`
-- Task status: pending
-- Implementer: unchecked
-- Spec review: unchecked
-- Code quality: unchecked
-- Next action: Start implementation.
+- Task status: complete
+- Implementer: checked
+- Spec review: checked
+- Code quality: checked
+- Next action: Task complete; continue to next task.
 
 ## Task 5: Register Skills Tools In Stdio And HTTP
 
