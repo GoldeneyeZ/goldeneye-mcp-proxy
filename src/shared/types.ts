@@ -9,6 +9,8 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
+import type { SkillGatewayConfig } from "../skills/types.js";
+
 // ──────────────────────────────────────────────
 // 1. Configuration
 // ──────────────────────────────────────────────
@@ -40,9 +42,17 @@ export interface UpstreamConfig {
   lazy?: LazyConfig;
 }
 
-/** Top-level config: server key → upstream config */
-export interface GatewayConfig {
-  [serverKey: string]: UpstreamConfig;
+/** Top-level config: server key → upstream config, plus reserved gateway sections */
+export type GatewayConfig = {
+  _skills?: SkillGatewayConfig;
+} & {
+  [serverKey: string]: UpstreamConfig | SkillGatewayConfig | undefined;
+};
+
+export function isUpstreamConfig(value: unknown): value is UpstreamConfig {
+  if (!value || typeof value !== "object") return false;
+  const type = (value as { type?: unknown }).type;
+  return type === "local" || type === "remote";
 }
 
 /** A registered project for codegraph auto-injection */

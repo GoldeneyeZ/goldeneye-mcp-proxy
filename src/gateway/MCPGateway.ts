@@ -19,7 +19,7 @@
  */
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { GatewayConfig } from "../shared/types.js";
+import { isUpstreamConfig, type GatewayConfig, type UpstreamConfig } from "../shared/types.js";
 import { Config } from "../config/Config.js";
 import { SearchEngine } from "../search/SearchEngine.js";
 import { JobManager } from "../jobs/JobManager.js";
@@ -63,7 +63,7 @@ export class MCPGateway {
     this.resourceMonitor = new ResourceMonitor();
 
     // Wire lazy-loading dependencies into ConnectionManager
-    this.connections.setConfigProvider(() => this.config.getAll());
+    this.connections.setConfigProvider(() => getUpstreamConfigMap(this.config.getAll()));
     this.connections.setSnapshotManager(this.snapshotManager);
     this.connections.setResourceMonitor(this.resourceMonitor);
 
@@ -148,10 +148,11 @@ export class MCPGateway {
    */
   async connectAll(forceConnect = false): Promise<void> {
     const allConfig = this.config.getAll();
+    const upstreamConfig = getUpstreamConfigMap(allConfig);
     const eagerKeys: string[] = [];
     const lazyKeys: string[] = [];
 
-    for (const [serverKey, config] of Object.entries(allConfig)) {
+    for (const [serverKey, config] of Object.entries(upstreamConfig)) {
       if (config.enabled === false) continue;
       const lazy = normalizeLazyConfig(config.lazy);
       if (!forceConnect && lazy.enabled && !lazy.prewarm) {
@@ -163,7 +164,7 @@ export class MCPGateway {
 
     // Eager-connect non-lazy servers (existing behavior)
     const eagerPromises = eagerKeys.map((serverKey) =>
-      this.connections.connectWithRetry(serverKey, allConfig[serverKey]).catch((err) => {
+      this.connections.connectWithRetry(serverKey, upstreamConfig[serverKey]).catch((err) => {
         console.error(`  [${serverKey}] FAILED: ${(err as Error).message}`);
       })
     );
@@ -191,7 +192,7 @@ export class MCPGateway {
     const connectedCount = this.connections.getConnectedServers().length;
     const lazyCount = lazyKeys.length;
     console.error(
-      `  [gateway] Ready: ${toolCount} tools (${connectedCount} connected + ${lazyCount} lazy) from ${Object.keys(allConfig).length} servers`
+      `  [gateway] Ready: ${toolCount} tools (${connectedCount} connected + ${lazyCount} lazy) from ${Object.keys(upstreamConfig).length} servers`
     );
 
     // Start idle monitor if any lazy servers exist
@@ -246,8 +247,10 @@ export class MCPGateway {
     this.pendingReload = true;
     console.error("  [gateway] Config change detected, reloading...");
 
-    const oldKeys = new Set(Object.keys(oldConfig));
-    const newKeys = new Set(Object.keys(newConfig));
+    const oldUpstreamConfig = getUpstreamConfigMap(oldConfig);
+    const newUpstreamConfig = getUpstreamConfigMap(newConfig);
+    const oldKeys = new Set(Object.keys(oldUpstreamConfig));
+    const newKeys = new Set(Object.keys(newUpstreamConfig));
 
     const toRemove = [...oldKeys].filter((k) => !newKeys.has(k));
     const toAdd = [...newKeys].filter((k) => !oldKeys.has(k));
@@ -263,8 +266,8 @@ export class MCPGateway {
 
       // Check for changes in existing servers
       for (const key of toCheck) {
-        const oldC = oldConfig[key];
-        const newC = newConfig[key];
+        const oldC = oldUpstreamConfig[key];
+        const newC = newUpstreamConfig[key];
 
         // Disabled → still disabled: skip
         if (oldC?.enabled === false && newC?.enabled === false) continue;
@@ -327,7 +330,7 @@ export class MCPGateway {
 
       // Add new servers
       for (const key of toAdd) {
-        const config = newConfig[key];
+        const config = newUpstreamConfig[key];
         if (config?.enabled !== false) {
           const lazy = normalizeLazyConfig(config.lazy);
           if (lazy.enabled && !lazy.prewarm) {
@@ -393,4 +396,14 @@ export class MCPGateway {
     await this.server.close();
     console.error("  [gateway] Shutdown complete");
   }
+}
+
+function getUpstreamConfigMap(config: GatewayConfig): Record<string, UpstreamConfig> {
+  const upstreams: Record<string, UpstreamConfig> = {};
+  for (const [key, value] of Object.entries(config)) {
+    if (isUpstreamConfig(value)) {
+      upstreams[key] = value;
+    }
+  }
+  return upstreams;
 }
