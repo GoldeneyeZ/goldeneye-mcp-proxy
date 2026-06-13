@@ -2,7 +2,7 @@
 
 **Plan:** `docs/superfastpowers/plans/GSD/2026-06-13-global-skill-deferral.md`
 **Task:** `GSD-7`
-**Commit SHA:** Pending until task completion. If review fixes add commits, update to the latest task commit and note the reviewed range below.
+**Commit SHA:** `e00f051`. If review fixes add commits, update to the latest task commit and note the reviewed range below.
 
 ## Starting Context
 
@@ -16,6 +16,23 @@ The files above are starting points only. Inspect any additional files needed to
 
 ## Completion Updates
 
-The implementer updates this section before review with the final task commit
-SHA, reviewed commit range if relevant, files created, files modified,
-additional relevant files, and verification commands/results.
+Documented global skill deferral in README, agent context, and example config.
+
+Files created:
+- None.
+
+Files modified:
+- `README.md`
+- `AGENT-CONTEXT.md`
+- `config.example.json`
+
+Additional relevant files:
+- A pre-existing unstaged README diagram spacing edit was preserved and not
+  included in commit `e00f051`.
+- `dist/` changed from `npm run build`; generated output intentionally left for
+  the final build artifact task.
+
+Verification:
+- `node -e "JSON.parse(require('fs').readFileSync('config.example.json','utf8')); console.log('config ok')"`:
+  PASS, printed `config ok`.
+- `npm run build`: PASS.
