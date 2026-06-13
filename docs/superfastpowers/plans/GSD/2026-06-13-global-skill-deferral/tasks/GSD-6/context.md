@@ -2,7 +2,7 @@
 
 **Plan:** `docs/superfastpowers/plans/GSD/2026-06-13-global-skill-deferral.md`
 **Task:** `GSD-6`
-**Commit SHA:** Pending until task completion. If review fixes add commits, update to the latest task commit and note the reviewed range below.
+**Commit SHA:** `97b98bb`. If review fixes add commits, update to the latest task commit and note the reviewed range below.
 
 ## Starting Context
 
@@ -16,6 +16,19 @@ The files above are starting points only. Inspect any additional files needed to
 
 ## Completion Updates
 
-The implementer updates this section before review with the final task commit
-SHA, reviewed commit range if relevant, files created, files modified,
-additional relevant files, and verification commands/results.
+Implemented explicit Codex global skill migration/restore service and CLI flags.
+
+Files created:
+- `src/skills/SkillMigrationService.ts`
+- `tests/skill-migration-service.test.ts`
+
+Files modified:
+- `src/index.ts`
+
+Additional relevant files:
+- `dist/` changed from `npm run build`; generated output intentionally left for
+  the final build artifact task.
+
+Verification:
+- `npm test -- tests/skill-migration-service.test.ts`: PASS.
+- `npm run build`: PASS.
