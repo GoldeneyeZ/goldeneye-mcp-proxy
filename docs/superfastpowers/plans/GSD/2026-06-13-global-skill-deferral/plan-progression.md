@@ -1,15 +1,15 @@
 # Plan Progression
 
-Last updated: 2026-06-13 17:15
+Last updated: 2026-06-13 17:16
 
 ## Task 1: Skill Types, Frontmatter, And Config
 
 - Path: `docs/superfastpowers/plans/GSD/2026-06-13-global-skill-deferral/tasks/GSD-1/`
-- Task status: implementing
-- Implementer: unchecked
-- Spec review: unchecked
-- Code quality: unchecked
-- Next action: Write failing tests for skill frontmatter and config.
+- Task status: complete
+- Implementer: checked
+- Spec review: checked
+- Code quality: checked-with-minor-notes
+- Next action: Task complete; continue to next task.
 
 ## Task 2: Skill Registry And Search Engine
 

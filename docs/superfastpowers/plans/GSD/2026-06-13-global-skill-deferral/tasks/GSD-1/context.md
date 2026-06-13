@@ -2,7 +2,7 @@
 
 **Plan:** `docs/superfastpowers/plans/GSD/2026-06-13-global-skill-deferral.md`
 **Task:** `GSD-1`
-**Commit SHA:** Pending until task completion. If review fixes add commits, update to the latest task commit and note the reviewed range below.
+**Commit SHA:** `9c19079`. If review fixes add commits, update to the latest task commit and note the reviewed range below.
 
 ## Starting Context
 
@@ -19,6 +19,26 @@ The files above are starting points only. Inspect any additional files needed to
 
 ## Completion Updates
 
-The implementer updates this section before review with the final task commit
-SHA, reviewed commit range if relevant, files created, files modified,
-additional relevant files, and verification commands/results.
+Implemented skill shared types, `SKILL.md` frontmatter parsing, skill config
+defaults, and reserved `_skills` config typing.
+
+Files created:
+- `src/skills/types.ts`
+- `src/skills/skill-frontmatter.ts`
+- `src/config/skill-config.ts`
+- `tests/skill-frontmatter.test.ts`
+- `tests/skill-config.test.ts`
+
+Files modified:
+- `src/shared/types.ts`
+- `src/gateway/MCPGateway.ts`
+
+Additional relevant files:
+- `dist/` changed from `npm run build`; generated output intentionally left for
+  the final build artifact task.
+
+Verification:
+- `npm test -- tests/skill-frontmatter.test.ts tests/skill-config.test.ts`:
+  PASS. Note: current package script also runs `tests/**/*.test.ts`, so existing
+  tests ran in the same command.
+- `npm run build`: PASS.
