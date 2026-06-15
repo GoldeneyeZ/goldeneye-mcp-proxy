@@ -1,6 +1,7 @@
 import type { SkillRegistry } from "./SkillRegistry.js";
 import type { SkillResourcePolicy } from "./SkillResourcePolicy.js";
 import type { SkillSearchEngine } from "./SkillSearchEngine.js";
+import type { SkillRefreshSummary } from "./types.js";
 export declare class SkillGatewayError extends Error {
     readonly code: number;
     constructor(message: string, code?: number);
@@ -12,11 +13,29 @@ export interface SkillGatewayServiceDeps {
     migrationPaths: {
         codexSkillsPath: string;
         deferredPath: string;
+        agentsSkillsPath: string;
+        agentsDeferredPath: string;
     };
 }
 export declare class SkillGatewayService {
     private readonly deps;
+    private lastRefreshSummary?;
     constructor(deps: SkillGatewayServiceDeps);
+    list(args: {
+        source?: string;
+        limit?: number;
+        offset?: number;
+    }): {
+        count: number;
+        offset: number;
+        limit: number;
+        skills: {
+            id: string;
+            name: string;
+            description: string;
+            source: string;
+        }[];
+    };
     search(args: {
         query?: string;
         limit?: number;
@@ -59,12 +78,20 @@ export declare class SkillGatewayService {
             path: string;
             reason: string;
         }[];
+        lastRefreshedAt: string | undefined;
         migration: {
             codexSkillsPath: string;
             deferredPath: string;
             codexSkillsExists: boolean;
             deferredExists: boolean;
+            agentsSkillsPath: string;
+            agentsDeferredPath: string;
+            agentsSkillsExists: boolean;
+            agentsDeferredExists: boolean;
         };
     };
-    refresh(): void;
+    startupLogLine(): string;
+    refresh(reason?: string): SkillRefreshSummary;
+    refreshLogLine(summary: SkillRefreshSummary): string;
+    private buildRefreshSummary;
 }

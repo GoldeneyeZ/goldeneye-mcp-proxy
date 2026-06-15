@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { SkillRegistry } from "../src/skills/SkillRegistry.js";
@@ -47,4 +47,28 @@ test("SkillRegistry records invalid skills without failing refresh", () => {
   assert.equal(registry.getSkills().length, 0);
   assert.equal(registry.getInvalidSkills().length, 1);
   assert.match(registry.getInvalidSkills()[0].reason, /Missing SKILL.md frontmatter/);
+});
+
+test("SkillRegistry follows symlinked skill directories", () => {
+  const root = mkdtempSync(join(tmpdir(), "skills-"));
+  const target = mkdtempSync(join(tmpdir(), "skill-target-"));
+  mkdirSync(join(target, "linked"), { recursive: true });
+  writeFileSync(join(target, "linked", "SKILL.md"), `---
+name: linked
+description: Linked skill.
+---
+# Linked
+`);
+  symlinkSync(join(target, "linked"), join(root, "linked"), "dir");
+
+  const registry = new SkillRegistry({
+    sources: [{ label: "agents-deferred", path: root, enabled: true }],
+    maxResourceBytes: 128 * 1024,
+    maxResourceEntries: 50,
+  });
+
+  registry.refresh();
+
+  assert.equal(registry.getSkills().length, 1);
+  assert.equal(registry.getSkills()[0].id, "agents-deferred::linked");
 });

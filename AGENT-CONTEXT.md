@@ -241,6 +241,10 @@ assuming every skill is already in context.
 3. `skills.read_resource({ id, path })` only when the pulled skill references a
    specific support file you need.
 
+Default global skill roots are `~/.codex/skills.deferred` and
+`~/.agents/skills.deferred`. Use the skill id returned by `skills.search`; ids
+can start with either `codex-deferred::` or `agents-deferred::`.
+
 Do not call `skills.read_resource` for every listed resource. Pull only the files
 that the selected skill says are relevant to the current task.
 

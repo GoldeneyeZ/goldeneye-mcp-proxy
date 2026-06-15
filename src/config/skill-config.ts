@@ -8,11 +8,18 @@ export const DEFAULT_MAX_RESOURCE_ENTRIES = 50;
 
 export function resolveSkillConfig(config: GatewayConfig, homeDir = homedir()): ResolvedSkillConfig {
   const raw = (config._skills || {}) as SkillGatewayConfig;
-  const defaultSource: SkillSourceConfig = {
-    label: "codex-deferred",
-    path: join(homeDir, ".codex", "skills.deferred"),
-    enabled: true,
-  };
+  const defaultSources: SkillSourceConfig[] = [
+    {
+      label: "codex-deferred",
+      path: join(homeDir, ".codex", "skills.deferred"),
+      enabled: true,
+    },
+    {
+      label: "agents-deferred",
+      path: join(homeDir, ".agents", "skills.deferred"),
+      enabled: true,
+    },
+  ];
 
   const customSources = (raw.sources || [])
     .map((source) => ({
@@ -23,7 +30,7 @@ export function resolveSkillConfig(config: GatewayConfig, homeDir = homedir()): 
     .filter((source) => source.enabled);
 
   return {
-    sources: [defaultSource, ...customSources],
+    sources: [...defaultSources, ...customSources],
     maxResourceBytes: raw.maxResourceBytes || DEFAULT_MAX_RESOURCE_BYTES,
     maxResourceEntries: raw.maxResourceEntries || DEFAULT_MAX_RESOURCE_ENTRIES,
   };

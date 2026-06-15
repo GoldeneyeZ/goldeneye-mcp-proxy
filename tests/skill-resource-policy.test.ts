@@ -52,3 +52,22 @@ test("listResources returns bounded file and directory entries", () => {
   assert.equal(resources.length, 2);
   assert.deepEqual(resources.map((entry) => entry.path).sort(), ["references", "scripts"]);
 });
+
+test("listResources exposes shared text files as skill resources", () => {
+  const root = mkdtempSync(join(tmpdir(), "skill-resource-"));
+  const skillDir = join(root, "cleaner-code");
+  mkdirSync(join(skillDir, "shared", "rules"), { recursive: true });
+  writeFileSync(join(skillDir, "SKILL.md"), "# Cleaner Code\nUse shared resources when needed.\n");
+  writeFileSync(join(skillDir, "shared", "rules", "style.md"), "# Style\n");
+  writeFileSync(join(skillDir, "shared", "config.json"), "{}\n");
+  writeFileSync(join(skillDir, "shared", "logo.png"), "not really png\n");
+  const policy = new SkillResourcePolicy({ maxResourceBytes: 128 * 1024, maxResourceEntries: 50 });
+
+  const resources = policy.listResources(skillDir, "# Cleaner Code\nUse shared resources when needed.\n");
+
+  assert.deepEqual(resources.map((entry) => entry.path), [
+    "shared",
+    "shared/config.json",
+    "shared/rules/style.md",
+  ]);
+});

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { extractMarkdownHeadings, parseSkillMarkdown } from "./skill-frontmatter.js";
 import type { ResolvedSkillConfig, SkillRecord } from "./types.js";
@@ -70,12 +70,17 @@ export class SkillRegistry {
 function findSkillFiles(root: string): string[] {
   const found: string[] = [];
   const pending = [root];
+  const visited = new Set<string>();
 
   while (pending.length > 0) {
     const current = pending.pop() as string;
+    const realCurrent = realpathSync(current);
+    if (visited.has(realCurrent)) continue;
+    visited.add(realCurrent);
+
     for (const entry of readdirSync(current, { withFileTypes: true })) {
       const fullPath = join(current, entry.name);
-      if (entry.isDirectory()) {
+      if (isTraversableDirectory(entry, fullPath)) {
         pending.push(fullPath);
       } else if (entry.isFile() && entry.name === "SKILL.md") {
         found.push(fullPath);
@@ -84,6 +89,17 @@ function findSkillFiles(root: string): string[] {
   }
 
   return found.sort();
+}
+
+function isTraversableDirectory(entry: import("node:fs").Dirent, path: string): boolean {
+  if (entry.isDirectory()) return true;
+  if (!entry.isSymbolicLink()) return false;
+
+  try {
+    return statSync(path).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 function normalizePath(path: string): string {

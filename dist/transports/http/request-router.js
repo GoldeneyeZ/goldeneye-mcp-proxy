@@ -89,6 +89,14 @@ export class HttpMcpRequestRouter {
                         fields: args.fields,
                         search: args.search ? String(args.search) : undefined,
                     })));
+                case "skills.list":
+                    if (!this.skillService)
+                        return jsonRpcError(id, -32602, "Skill gateway is not available");
+                    return jsonRpcSuccess(id, toContent(this.skillService.list({
+                        source: args.source ? String(args.source) : undefined,
+                        limit: Number(args.limit) || undefined,
+                        offset: Number(args.offset) || undefined,
+                    })));
                 case "skills.search":
                     if (!this.skillService)
                         return jsonRpcError(id, -32602, "Skill gateway is not available");

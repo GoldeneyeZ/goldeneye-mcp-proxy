@@ -117,6 +117,15 @@ function registerStatusTool(server, statusHolder) {
     });
 }
 function registerSkillTools(server, skillService) {
+    server.registerTool("skills.list", {
+        title: "List Deferred Skills",
+        description: "List deferred skills with compact metadata only.",
+        inputSchema: {
+            source: z.string().optional().describe("Optional source label"),
+            limit: z.number().optional().describe("Max skills to return"),
+            offset: z.number().optional().describe("Pagination offset"),
+        },
+    }, async ({ source, limit, offset }) => runTool(() => skillService.list({ source, limit, offset })));
     server.registerTool("skills.search", {
         title: "Search Deferred Skills",
         description: "Search global deferred skills. Returns compact metadata only.",

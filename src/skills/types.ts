@@ -63,10 +63,24 @@ export interface SkillStatus {
   skillCount: number;
   invalidSkillCount: number;
   invalidSkills: Array<{ path: string; reason: string }>;
+  lastRefreshedAt?: string;
   migration: {
     codexSkillsPath: string;
     deferredPath: string;
     codexSkillsExists: boolean;
     deferredExists: boolean;
+    agentsSkillsPath: string;
+    agentsDeferredPath: string;
+    agentsSkillsExists: boolean;
+    agentsDeferredExists: boolean;
   };
+}
+
+export interface SkillRefreshSummary {
+  reason: string;
+  refreshedAt: string;
+  roots: Array<{ label: string; path: string; indexed: boolean; reason?: string }>;
+  skillCount: number;
+  indexedRootCount: number;
+  invalidSkillCount: number;
 }

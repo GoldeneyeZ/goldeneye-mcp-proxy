@@ -36,6 +36,8 @@ let discoverMode = false;
 let helpMode = false;
 let deferCodexSkills = false;
 let restoreCodexSkills = false;
+let deferAgentsSkills = false;
+let restoreAgentsSkills = false;
 let dryRun = false;
 
 const args = process.argv.slice(2);
@@ -50,6 +52,10 @@ for (let i = 0; i < args.length; i++) {
     deferCodexSkills = true;
   } else if (args[i] === "--restore-codex-skills") {
     restoreCodexSkills = true;
+  } else if (args[i] === "--defer-agents-skills") {
+    deferAgentsSkills = true;
+  } else if (args[i] === "--restore-agents-skills") {
+    restoreAgentsSkills = true;
   } else if (args[i] === "--dry-run") {
     dryRun = true;
   } else if (args[i] === "--help" || args[i] === "-h") {
@@ -61,8 +67,14 @@ for (let i = 0; i < args.length; i++) {
 
 if (helpMode) {
   printUsage();
-} else if (deferCodexSkills || restoreCodexSkills) {
-  runSkillMigration(deferCodexSkills, restoreCodexSkills, dryRun);
+} else if (deferCodexSkills || restoreCodexSkills || deferAgentsSkills || restoreAgentsSkills) {
+  runSkillMigration({
+    deferCodexSkills,
+    restoreCodexSkills,
+    deferAgentsSkills,
+    restoreAgentsSkills,
+    dryRun,
+  });
 } else if (discoverMode) {
   runDiscovery(configPath);
 } else if (port) {
@@ -83,6 +95,8 @@ function printUsage(): void {
   goldeneye-mcp-proxy --discover [path-to-config.json]
   goldeneye-mcp-proxy --defer-codex-skills [--dry-run]
   goldeneye-mcp-proxy --restore-codex-skills [--dry-run]
+  goldeneye-mcp-proxy --defer-agents-skills [--dry-run]
+  goldeneye-mcp-proxy --restore-agents-skills [--dry-run]
   goldeneye-mcp-proxy --help
 
 Options:
@@ -91,21 +105,40 @@ Options:
   --discover     Force catalog discovery, save snapshots, and exit.
   --defer-codex-skills    Rename ~/.codex/skills to ~/.codex/skills.deferred.
   --restore-codex-skills  Restore ~/.codex/skills.deferred to ~/.codex/skills.
+  --defer-agents-skills    Rename ~/.agents/skills to ~/.agents/skills.deferred.
+  --restore-agents-skills  Restore ~/.agents/skills.deferred to ~/.agents/skills.
   --dry-run       Show migration changes without mutating files.
   --help, -h     Print this help text and exit.`);
 }
 
-function runSkillMigration(deferCodexSkills: boolean, restoreCodexSkills: boolean, dryRun: boolean): void {
-  if (deferCodexSkills && restoreCodexSkills) {
-    console.error("Use only one of --defer-codex-skills or --restore-codex-skills");
+function runSkillMigration(options: {
+  deferCodexSkills: boolean;
+  restoreCodexSkills: boolean;
+  deferAgentsSkills: boolean;
+  restoreAgentsSkills: boolean;
+  dryRun: boolean;
+}): void {
+  const selected = [
+    options.deferCodexSkills,
+    options.restoreCodexSkills,
+    options.deferAgentsSkills,
+    options.restoreAgentsSkills,
+  ].filter(Boolean).length;
+  if (selected !== 1) {
+    console.error("Use exactly one skill migration flag");
     process.exit(1);
   }
 
   const service = new SkillMigrationService();
   try {
-    const result = deferCodexSkills
-      ? service.deferCodexSkills({ dryRun })
-      : service.restoreCodexSkills({ dryRun });
+    const result =
+      options.deferCodexSkills
+        ? service.deferCodexSkills({ dryRun: options.dryRun })
+        : options.restoreCodexSkills
+          ? service.restoreCodexSkills({ dryRun: options.dryRun })
+          : options.deferAgentsSkills
+            ? service.deferAgentsSkills({ dryRun: options.dryRun })
+            : service.restoreAgentsSkills({ dryRun: options.dryRun });
     console.log(JSON.stringify(result, null, 2));
   } catch (error) {
     console.error((error as Error).message);

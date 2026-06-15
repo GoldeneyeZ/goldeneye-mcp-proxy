@@ -8,6 +8,7 @@
         "enabled": false
       }
     ],
+    "_note": "Defaults also include ~/.codex/skills.deferred and ~/.agents/skills.deferred.",
     "maxResourceBytes": 131072,
     "maxResourceEntries": 50
   },

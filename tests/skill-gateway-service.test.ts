@@ -36,6 +36,8 @@ description: Review code changes.
     migrationPaths: {
       codexSkillsPath: join(root, ".codex", "skills"),
       deferredPath: join(root, ".codex", "skills.deferred"),
+      agentsSkillsPath: join(root, ".agents", "skills"),
+      agentsDeferredPath: join(root, ".agents", "skills.deferred"),
     },
   });
 }
@@ -48,6 +50,22 @@ test("search returns compact skill results", () => {
   assert.equal(result.found, 1);
   assert.equal(result.results[0].id, "codex-deferred::review");
   assert.equal(result.results[0].description, "Review code changes.");
+});
+
+test("list returns compact paginated skill metadata", () => {
+  const service = createService();
+
+  const result = service.list({ limit: 10, offset: 0 });
+
+  assert.equal(result.count, 1);
+  assert.equal(result.offset, 0);
+  assert.equal(result.limit, 10);
+  assert.deepEqual(result.skills, [{
+    id: "codex-deferred::review",
+    name: "review",
+    description: "Review code changes.",
+    source: "codex-deferred",
+  }]);
 });
 
 test("pull returns full skill content and resource map", () => {
@@ -71,4 +89,26 @@ test("readResource returns one support file", () => {
 test("pull throws for stale ids", () => {
   const service = createService();
   assert.throws(() => service.pull({ id: "missing::skill" }), /Skill not found: missing::skill/);
+});
+
+test("startup log reports deferred skill and indexed root counts", () => {
+  const service = createService();
+  const summary = service.refresh("startup");
+
+  assert.equal(service.startupLogLine(), service.refreshLogLine(summary));
+  assert.match(service.startupLogLine(), /Deferred skills indexed: 1 skill across 1 root/);
+});
+
+test("refresh returns summary and updates status timestamp", () => {
+  const service = createService();
+
+  const summary = service.refresh("startup");
+  const status = service.status();
+
+  assert.equal(summary.reason, "startup");
+  assert.equal(summary.skillCount, 1);
+  assert.equal(summary.indexedRootCount, 1);
+  assert.equal(summary.invalidSkillCount, 0);
+  assert.equal(summary.roots[0].indexed, true);
+  assert.equal(status.lastRefreshedAt, summary.refreshedAt);
 });

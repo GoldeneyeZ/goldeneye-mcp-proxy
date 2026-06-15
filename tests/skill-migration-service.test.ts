@@ -33,6 +33,31 @@ test("migration renames skills and creates marker directory", () => {
   assert.match(readFileSync(join(home, ".codex", "skills", "README.md"), "utf-8"), /deferred through goldeneye-mcp-proxy/);
 });
 
+test("agents migration renames skills and creates marker directory", () => {
+  const home = mkdtempSync(join(tmpdir(), "skill-migrate-"));
+  mkdirSync(join(home, ".agents", "skills", "review"), { recursive: true });
+  writeFileSync(join(home, ".agents", "skills", "review", "SKILL.md"), "skill");
+  const service = new SkillMigrationService(home);
+
+  const result = service.deferAgentsSkills({ dryRun: false });
+
+  assert.equal(result.changed, true);
+  assert.equal(result.agentsSkillsPath, join(home, ".agents", "skills"));
+  assert.equal(result.codexSkillsPath, undefined);
+  assert.equal(existsSync(join(home, ".agents", "skills.deferred", "review", "SKILL.md")), true);
+  assert.match(readFileSync(join(home, ".agents", "skills", "README.md"), "utf-8"), /deferred through goldeneye-mcp-proxy/);
+});
+
+test("agents restore refuses if marker directory was modified", () => {
+  const home = mkdtempSync(join(tmpdir(), "skill-migrate-"));
+  mkdirSync(join(home, ".agents", "skills.deferred"), { recursive: true });
+  mkdirSync(join(home, ".agents", "skills"), { recursive: true });
+  writeFileSync(join(home, ".agents", "skills", "custom.md"), "modified");
+  const service = new SkillMigrationService(home);
+
+  assert.throws(() => service.restoreAgentsSkills({ dryRun: false }), /not the migration marker directory/);
+});
+
 test("restore refuses if marker directory was modified", () => {
   const home = mkdtempSync(join(tmpdir(), "skill-migrate-"));
   mkdirSync(join(home, ".codex", "skills.deferred"), { recursive: true });

@@ -1,6 +1,8 @@
-import { existsSync, lstatSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 const TEXT_EXTENSIONS = new Set([".md", ".txt", ".json", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".sh", ".py", ".yml", ".yaml"]);
+const DIRECT_RESOURCE_NAMES = ["references", "shared", "scripts", "assets"];
+const EXPANDABLE_RESOURCE_DIRS = new Set(["scripts", "references", "shared"]);
 export class SkillResourcePolicy {
     limits;
     constructor(limits) {
@@ -8,16 +10,33 @@ export class SkillResourcePolicy {
     }
     listResources(skillDir, skillMarkdown) {
         const entries = [];
-        const directNames = new Set(["scripts", "assets", "references"]);
-        for (const name of directNames) {
+        const seen = new Set();
+        const addEntry = (entry) => {
+            if (entries.length >= this.limits.maxResourceEntries)
+                return;
+            const normalized = normalizePath(entry.path);
+            if (seen.has(normalized))
+                return;
+            seen.add(normalized);
+            entries.push({ ...entry, path: normalized });
+        };
+        for (const name of DIRECT_RESOURCE_NAMES) {
             const path = join(skillDir, name);
             if (existsSync(path)) {
                 const stats = statSync(path);
-                entries.push({
+                addEntry({
                     path: name,
                     type: stats.isDirectory() ? "directory" : "file",
                     size: stats.isFile() ? stats.size : undefined,
                 });
+            }
+        }
+        for (const name of DIRECT_RESOURCE_NAMES) {
+            if (!EXPANDABLE_RESOURCE_DIRS.has(name))
+                continue;
+            const path = join(skillDir, name);
+            if (existsSync(path) && statSync(path).isDirectory()) {
+                this.listTextFiles(skillDir, path, name, addEntry);
             }
         }
         for (const linkedPath of extractMarkdownLinks(skillMarkdown)) {
@@ -28,17 +47,17 @@ export class SkillResourcePolicy {
                 if (!existsSync(fullPath))
                     continue;
                 const stats = statSync(fullPath);
-                entries.push({
+                addEntry({
                     path: normalizePath(linkedPath),
                     type: stats.isDirectory() ? "directory" : "file",
                     size: stats.isFile() ? stats.size : undefined,
                 });
             }
             catch {
-                entries.push({ path: linkedPath, type: "file", reason: "Rejected by resource policy" });
+                addEntry({ path: linkedPath, type: "file", reason: "Rejected by resource policy" });
             }
         }
-        return dedupe(entries).slice(0, this.limits.maxResourceEntries);
+        return entries;
     }
     readResource(skillDir, resourcePath) {
         const fullPath = this.resolveInside(skillDir, resourcePath);
@@ -81,20 +100,41 @@ export class SkillResourcePolicy {
         }
         return fullPath;
     }
+    listTextFiles(skillDir, rootPath, rootResourcePath, addEntry) {
+        const pending = [{ path: rootPath, resourcePath: rootResourcePath }];
+        const visited = new Set();
+        while (pending.length > 0) {
+            const current = pending.pop();
+            const realCurrent = realpathSync(current.path);
+            if (visited.has(realCurrent))
+                continue;
+            visited.add(realCurrent);
+            for (const entry of readdirSync(current.path, { withFileTypes: true }).sort((a, b) => b.name.localeCompare(a.name))) {
+                const resourcePath = normalizePath(`${current.resourcePath}/${entry.name}`);
+                let fullPath;
+                let stats;
+                try {
+                    fullPath = this.resolveInside(skillDir, resourcePath);
+                    stats = statSync(fullPath);
+                }
+                catch {
+                    addEntry({ path: resourcePath, type: "file", reason: "Rejected by resource policy" });
+                    continue;
+                }
+                if (stats.isDirectory()) {
+                    pending.push({ path: fullPath, resourcePath });
+                }
+                else if (stats.isFile() && isTextPath(resourcePath)) {
+                    addEntry({ path: resourcePath, type: "file", size: stats.size });
+                }
+            }
+        }
+    }
 }
 function extractMarkdownLinks(markdown) {
     return Array.from(markdown.matchAll(/\[[^\]]+]\(([^)]+)\)/g))
         .map((match) => match[1])
         .filter((path) => !path.includes("://") && !path.startsWith("#"));
-}
-function dedupe(entries) {
-    const seen = new Set();
-    return entries.filter((entry) => {
-        if (seen.has(entry.path))
-            return false;
-        seen.add(entry.path);
-        return true;
-    });
 }
 function normalizePath(path) {
     return path.split(sep).join("/");

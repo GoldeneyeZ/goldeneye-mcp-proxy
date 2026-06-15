@@ -121,9 +121,12 @@ export class MCPGateway {
             migrationPaths: {
                 codexSkillsPath: join(homedir(), ".codex", "skills"),
                 deferredPath: join(homedir(), ".codex", "skills.deferred"),
+                agentsSkillsPath: join(homedir(), ".agents", "skills"),
+                agentsDeferredPath: join(homedir(), ".agents", "skills.deferred"),
             },
         });
-        this.skillService.refresh();
+        const skillRefresh = this.skillService.refresh("startup");
+        console.error(this.skillService.refreshLogLine(skillRefresh));
         this.server = createServer(this.toolService, statusHolder, this.skillService);
         // Wire up the job manager's execute function
         this.jobManager.setExecuteJob(async (job) => {
@@ -352,7 +355,8 @@ export class MCPGateway {
                     }
                 }
             }
-            this.skillService.refresh();
+            const skillRefresh = this.skillService.refresh("config-reload");
+            console.error(this.skillService.refreshLogLine(skillRefresh));
             this.searchEngine.warmup();
             this.pendingReload = false;
             this.lastReloadTimestamp = Date.now();

@@ -34,8 +34,10 @@ startup, it loads compact gateway tool definitions from this proxy. The proxy th
 
 5. **Global skill deferral** — Global Codex skills can be moved from
    `~/.codex/skills` to `~/.codex/skills.deferred` and exposed through
-   `skills.search`, `skills.pull`, and `skills.read_resource`. Skill bodies and
-   support files are loaded only when the agent asks for them.
+   `skills.search`, `skills.pull`, and `skills.read_resource`. The proxy also
+   supports moving agent-owned skills from `~/.agents/skills` to
+   `~/.agents/skills.deferred`. Skill bodies and support files are loaded only
+   when the agent asks for them.
 
 ---
 
@@ -46,11 +48,11 @@ complete set of MCP server processes. With 12+ MCP servers in your config, this 
 
 ```
 ┌──────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│  pi session 1│────►│  goldeneye-mcp-    │────►│  12 MCP servers  │
+│  pi session 1│────►│  goldeneye-mcp-  │────►│  12 MCP servers  │
 │              │     │  proxy (stdio)   │     │  (1.3 GB)        │
 ├──────────────┤     └──────────────────┘     └──────────────────┘
 │  pi session 2│────►┌──────────────────┐     ┌──────────────────┐
-│              │     │  goldeneye-mcp-    │────►│  12 MCP servers  │
+│              │     │  goldeneye-mcp-  │────►│  12 MCP servers  │
 ├──────────────┤     │  proxy (stdio)   │     │  (1.3 GB)        │
 │  VS Code     │────►└──────────────────┘     └──────────────────┘
 └──────────────┘                               ┌──────────────────┐
@@ -66,7 +68,7 @@ With the shared daemon:
 ```
 ┌──────────────┐     ┌────────────────────────┐     ┌──────────────────┐
 │  pi session 1│────►│                        │     │                  │
-├──────────────┤     │  goldeneye-mcp-proxy     │────►│  12 MCP servers  │
+├──────────────┤     │  goldeneye-mcp-proxy   │────►│  12 MCP servers  │
 │  pi session 2│────►│  daemon (HTTP port     │     │  (1.3 GB)        │
 ├──────────────┤     │  8767)                 │     │     ONE SET      │
 │  VS Code     │────►│                        │     │                  │
@@ -112,7 +114,7 @@ Catalog snapshots are stored in `~/.cache/goldeneye-mcp-proxy/catalogs/`.
 
 ---
 
-## The 6 Gateway Tools
+## MCP Tool Gateway Tools
 
 | Tool | Purpose | Token Cost |
 |------|---------|------------|
@@ -127,10 +129,16 @@ Catalog snapshots are stored in `~/.cache/goldeneye-mcp-proxy/catalogs/`.
 
 | Tool | Purpose |
 |------|---------|
+| `skills.list` | List deferred skills with compact metadata, pagination, and source filtering |
 | `skills.search` | Search global deferred skills by name, description, source, path, and headings |
 | `skills.pull` | Load one full `SKILL.md` plus metadata and a bounded resource map |
 | `skills.read_resource` | Read one support file for a pulled skill |
-| `skills.status` | Inspect indexed skill roots, invalid skills, and Codex migration state |
+| `skills.status` | Inspect indexed skill roots, invalid skills, and migration state |
+
+Default global deferred roots:
+
+- `~/.codex/skills.deferred` — populated by the Codex migration command.
+- `~/.agents/skills.deferred` — populated by the Agents migration command.
 
 ## Deferring Global Codex Skills
 
@@ -152,6 +160,28 @@ Rollback is available with:
 
 ```bash
 goldeneye-mcp-proxy --restore-codex-skills
+```
+
+## Deferring Global Agents Skills
+
+Run a dry-run first:
+
+```bash
+goldeneye-mcp-proxy --defer-agents-skills --dry-run
+```
+
+Then migrate:
+
+```bash
+goldeneye-mcp-proxy --defer-agents-skills
+```
+
+This renames `~/.agents/skills` to `~/.agents/skills.deferred` and leaves a
+marker README in `~/.agents/skills`, matching the Codex migration behavior.
+Rollback is available with:
+
+```bash
+goldeneye-mcp-proxy --restore-agents-skills
 ```
 
 ## Model Workflow
@@ -389,18 +419,22 @@ Update `opencode.json`:
 
 ```
 ┌──────────────┐     stdio      ┌──────────────────────────┐
-│  AI Client   │ ──────────── → │   goldeneye-mcp-proxy      │
-│  (sees 6     │ ← ──────────  │                          │
-│   tools)     │                │  ┌──────────────────┐    │
-└──────────────┘                │  │  SearchEngine     │    │  ← BM25 index
-                                │  │  (MiniSearch)     │    │
+│  AI Client   │ ──────────── → │   goldeneye-mcp-proxy    │
+│  (sees       │ ← ──────────   │                          │
+│   gateways)  │                │  ┌──────────────────┐    │
+└──────────────┘                │  │  SearchEngine    │    │  ← BM25 index
+                                │  │  (MiniSearch)    │    │
                                 │  └──────────────────┘    │
                                 │  ┌──────────────────┐    │
-                                │  │  ResponseShield   │    │  ← Truncation
-                                │  │  ResponseStore    │    │  ← Ring buffer
+                                │  │  SkillRegistry   │    │  ← Deferred skills
+                                │  │  SkillSearch     │    │
                                 │  └──────────────────┘    │
                                 │  ┌──────────────────┐    │
-                                │  │  ConnectionMgr    │ ───── → Upstream MCP
+                                │  │  ResponseShield  │    │  ← Truncation
+                                │  │  ResponseStore   │    │  ← Ring buffer
+                                │  └──────────────────┘    │
+                                │  ┌──────────────────┐    │
+                                │  │  ConnectionMgr   │ ───── → Upstream MCP
                                 │  └──────────────────┘    │     servers (stdio)
                                 └──────────────────────────┘
 ```
@@ -410,7 +444,7 @@ Update `opencode.json`:
 ```
 ┌──────────────┐    HTTP POST    ┌──────────────────────────┐
 │  pi #1       │ ──────────────► │                          │
-├──────────────┤                 │  goldeneye-mcp-proxy       │
+├──────────────┤                 │  goldeneye-mcp-proxy     │
 │  pi #2       │ ──────────────► │  daemon (port 8767)      │
 ├──────────────┤                 │                          │
 │  VS Code     │ ──────────────► │  ┌──────────────────┐    │
@@ -418,14 +452,18 @@ Update `opencode.json`:
 │  opencode    │ ──────────────► │  │  over HTTP POST  │    │
 └──────────────┘                 │  └──────────────────┘    │
                                  │  ┌──────────────────┐    │
-                                 │  │  SearchEngine     │    │
+                                 │  │  SearchEngine    │    │
                                  │  └──────────────────┘    │
                                  │  ┌──────────────────┐    │
-                                 │  │  ResponseShield   │    │
-                                 │  │  ResponseStore    │    │
+                                 │  │  SkillRegistry   │    │
+                                 │  │  SkillSearch     │    │
                                  │  └──────────────────┘    │
                                  │  ┌──────────────────┐    │
-                                 │  │  ConnectionMgr    │ ───── → ONE set of
+                                 │  │  ResponseShield  │    │
+                                 │  │  ResponseStore   │    │
+                                 │  └──────────────────┘    │
+                                 │  ┌──────────────────┐    │
+                                 │  │  ConnectionMgr   │ ───── → ONE set of
                                  │  └──────────────────┘    │     upstream MCP
                                  └──────────────────────────┘     servers
 

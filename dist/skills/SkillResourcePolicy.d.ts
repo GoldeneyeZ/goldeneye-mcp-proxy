@@ -12,4 +12,5 @@ export declare class SkillResourcePolicy {
         size: number;
     };
     private resolveInside;
+    private listTextFiles;
 }

@@ -1,5 +1,17 @@
 export const SKILL_TOOL_SCHEMAS = [
     {
+        name: "skills.list",
+        description: "List deferred skills with compact metadata only. Supports pagination and source filtering.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                source: { type: "string", description: "Optional source label, e.g. codex-deferred or agents-deferred" },
+                limit: { type: "number", description: "Max skills to return (default 50, max 100)" },
+                offset: { type: "number", description: "Pagination offset (default 0)" },
+            },
+        },
+    },
+    {
         name: "skills.search",
         description: "Search global deferred skills. Returns compact metadata only, never full SKILL.md content.",
         inputSchema: {
