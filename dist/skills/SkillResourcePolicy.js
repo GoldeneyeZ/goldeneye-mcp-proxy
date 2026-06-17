@@ -3,12 +3,13 @@ import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 const TEXT_EXTENSIONS = new Set([".md", ".txt", ".json", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".sh", ".py", ".yml", ".yaml"]);
 const DIRECT_RESOURCE_NAMES = ["references", "shared", "scripts", "assets"];
 const EXPANDABLE_RESOURCE_DIRS = new Set(["scripts", "references", "shared"]);
+const SHARED_RESOURCE_ROOT_NAMES = ["shared", "common", "resources"];
 export class SkillResourcePolicy {
     limits;
     constructor(limits) {
         this.limits = limits;
     }
-    listResources(skillDir, skillMarkdown) {
+    listResources(skill, skillMarkdown) {
         const entries = [];
         const seen = new Set();
         const addEntry = (entry) => {
@@ -21,34 +22,49 @@ export class SkillResourcePolicy {
             entries.push({ ...entry, path: normalized });
         };
         for (const name of DIRECT_RESOURCE_NAMES) {
-            const path = join(skillDir, name);
+            const path = join(skill.skillDir, name);
             if (existsSync(path)) {
-                const stats = statSync(path);
-                addEntry({
-                    path: name,
-                    type: stats.isDirectory() ? "directory" : "file",
-                    size: stats.isFile() ? stats.size : undefined,
-                });
+                try {
+                    const fullPath = this.resolveResource(skill, name).fullPath;
+                    const stats = statSync(fullPath);
+                    addEntry({
+                        path: name,
+                        type: stats.isDirectory() ? "directory" : "file",
+                        size: stats.isFile() ? stats.size : undefined,
+                    });
+                }
+                catch {
+                    addEntry({ path: name, type: "file", reason: "Rejected by resource policy" });
+                }
             }
         }
         for (const name of DIRECT_RESOURCE_NAMES) {
             if (!EXPANDABLE_RESOURCE_DIRS.has(name))
                 continue;
-            const path = join(skillDir, name);
-            if (existsSync(path) && statSync(path).isDirectory()) {
-                this.listTextFiles(skillDir, path, name, addEntry);
+            const path = join(skill.skillDir, name);
+            if (!existsSync(path))
+                continue;
+            try {
+                const fullPath = this.resolveResource(skill, name).fullPath;
+                if (statSync(fullPath).isDirectory()) {
+                    this.listTextFiles(skill, path, name, addEntry);
+                }
+            }
+            catch {
+                continue;
             }
         }
         for (const linkedPath of extractMarkdownLinks(skillMarkdown)) {
             if (entries.length >= this.limits.maxResourceEntries)
                 break;
             try {
-                const fullPath = this.resolveInside(skillDir, linkedPath);
+                const resolved = this.resolveResource(skill, linkedPath);
+                const fullPath = resolved.fullPath;
                 if (!existsSync(fullPath))
                     continue;
                 const stats = statSync(fullPath);
                 addEntry({
-                    path: normalizePath(linkedPath),
+                    path: resolved.resourcePath,
                     type: stats.isDirectory() ? "directory" : "file",
                     size: stats.isFile() ? stats.size : undefined,
                 });
@@ -59,8 +75,9 @@ export class SkillResourcePolicy {
         }
         return entries;
     }
-    readResource(skillDir, resourcePath) {
-        const fullPath = this.resolveInside(skillDir, resourcePath);
+    readResource(skill, resourcePath) {
+        const resolved = this.resolveResource(skill, resourcePath);
+        const fullPath = resolved.fullPath;
         const stats = statSync(fullPath);
         if (!stats.isFile()) {
             throw new Error(`Resource is not a file: ${resourcePath}`);
@@ -72,35 +89,42 @@ export class SkillResourcePolicy {
             throw new Error(`Unsupported resource file type: ${resourcePath}`);
         }
         return {
-            path: normalizePath(resourcePath),
+            path: resolved.resourcePath,
             content: readFileSync(fullPath, "utf-8"),
             size: stats.size,
         };
     }
-    resolveInside(skillDir, resourcePath) {
+    resolveResource(skill, resourcePath) {
         if (isAbsolute(resourcePath)) {
             throw new Error("Resource path must be relative");
         }
-        const realSkillDir = realpathSync(skillDir);
-        const fullPath = resolve(realSkillDir, resourcePath);
+        const segments = normalizeResourceSegments(resourcePath);
+        if (segments.length === 0 || !DIRECT_RESOURCE_NAMES.includes(segments[0])) {
+            throw new Error("Resource path must be under a skill resource directory");
+        }
+        const realSkillDir = realpathSync(skill.skillDir);
+        const fullPath = resolve(realSkillDir, ...segments);
         const lexicalRel = relative(realSkillDir, fullPath);
         if (lexicalRel.startsWith("..") || isAbsolute(lexicalRel)) {
             throw new Error("Resource path must stay inside the skill directory");
         }
         const realTarget = realpathSync(fullPath);
-        const rel = relative(realSkillDir, realTarget);
-        if (rel.startsWith("..") || isAbsolute(rel)) {
+        const targetRel = relative(realSkillDir, realTarget);
+        if (isInsideRelative(targetRel)) {
+            return { fullPath, resourcePath: segments.join("/") };
+        }
+        if (!this.hasSymlinkComponent(realSkillDir, segments)) {
             throw new Error("Resource path must stay inside the skill directory");
         }
-        if (lstatSync(fullPath).isSymbolicLink()) {
-            const symlinkRel = relative(realSkillDir, realTarget);
-            if (symlinkRel.startsWith("..") || isAbsolute(symlinkRel)) {
-                throw new Error("Resource path must stay inside the skill directory");
+        for (const sharedRoot of sharedResourceRoots(skill)) {
+            const rel = relative(sharedRoot, realTarget);
+            if (isInsideRelative(rel)) {
+                return { fullPath, resourcePath: segments.join("/") };
             }
         }
-        return fullPath;
+        throw new Error("Resource path must stay inside the skill directory or approved shared roots");
     }
-    listTextFiles(skillDir, rootPath, rootResourcePath, addEntry) {
+    listTextFiles(skill, rootPath, rootResourcePath, addEntry) {
         const pending = [{ path: rootPath, resourcePath: rootResourcePath }];
         const visited = new Set();
         while (pending.length > 0) {
@@ -114,7 +138,7 @@ export class SkillResourcePolicy {
                 let fullPath;
                 let stats;
                 try {
-                    fullPath = this.resolveInside(skillDir, resourcePath);
+                    fullPath = this.resolveResource(skill, resourcePath).fullPath;
                     stats = statSync(fullPath);
                 }
                 catch {
@@ -130,6 +154,15 @@ export class SkillResourcePolicy {
             }
         }
     }
+    hasSymlinkComponent(realSkillDir, segments) {
+        let current = realSkillDir;
+        for (const segment of segments) {
+            current = join(current, segment);
+            if (lstatSync(current).isSymbolicLink())
+                return true;
+        }
+        return false;
+    }
 }
 function extractMarkdownLinks(markdown) {
     return Array.from(markdown.matchAll(/\[[^\]]+]\(([^)]+)\)/g))
@@ -138,6 +171,26 @@ function extractMarkdownLinks(markdown) {
 }
 function normalizePath(path) {
     return path.split(sep).join("/");
+}
+function normalizeResourceSegments(path) {
+    const segments = path.split(/[\\/]+/).filter((segment) => segment.length > 0 && segment !== ".");
+    if (segments.includes("..")) {
+        throw new Error("Resource path must not contain parent traversal");
+    }
+    return segments;
+}
+function isInsideRelative(path) {
+    return path === "" || (!path.startsWith("..") && !isAbsolute(path));
+}
+function sharedResourceRoots(skill) {
+    const skillset = skill.relativePath.split(/[\\/]+/).filter(Boolean)[0];
+    if (!skillset)
+        return [];
+    const realRoot = realpathSync(skill.rootPath);
+    return SHARED_RESOURCE_ROOT_NAMES
+        .map((name) => join(realRoot, skillset, name))
+        .filter((path) => existsSync(path))
+        .map((path) => realpathSync(path));
 }
 function isTextPath(path) {
     const dot = basename(path).lastIndexOf(".");

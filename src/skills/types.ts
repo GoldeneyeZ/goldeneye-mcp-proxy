@@ -58,6 +58,12 @@ export interface SkillResourceEntry {
   reason?: string;
 }
 
+export interface SkillResourceContext {
+  rootPath: string;
+  skillDir: string;
+  relativePath: string;
+}
+
 export interface SkillStatus {
   roots: Array<{ label: string; path: string; indexed: boolean; reason?: string }>;
   skillCount: number;

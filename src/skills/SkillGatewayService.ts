@@ -76,14 +76,14 @@ export class SkillGatewayService {
       hash: skill.hash,
       lastModified: skill.lastModified,
       content,
-      resources: this.deps.resourcePolicy.listResources(skill.skillDir, content),
+      resources: this.deps.resourcePolicy.listResources(skill, content),
     };
   }
 
   readResource(args: { id: string; path: string }) {
     const skill = this.deps.registry.getSkill(args.id);
     if (!skill) throw new SkillGatewayError(`Skill not found: ${args.id}`);
-    return this.deps.resourcePolicy.readResource(skill.skillDir, args.path);
+    return this.deps.resourcePolicy.readResource(skill, args.path);
   }
 
   status() {
