@@ -43,12 +43,13 @@ test("tries systemd before detached fallback and stops when healthy", async () =
 
 test("uses exactly one detached fallback and returns false at the deadline", async () => {
   const calls: string[] = [];
+  let currentTime = 0;
   const result = await ensureDaemon("http://127.0.0.1:8767/mcp", {
     health: async () => false,
     startSystemd: async () => { calls.push("systemd"); return false; },
     startDetached: () => { calls.push("detached"); },
-    sleep: async () => { calls.push("sleep"); },
-    now: (() => { let value = 0; return () => value += 3000; })(),
+    sleep: async (milliseconds) => { calls.push("sleep"); currentTime += milliseconds; },
+    now: () => currentTime,
   }, 5000);
 
   assert.equal(result, false);
@@ -70,4 +71,45 @@ test("bounds polling sleeps to the remaining five-second window", async () => {
   assert.equal(result, false);
   assert.equal(sleeps.reduce((total, value) => total + value, 0), 5000);
   assert.ok(sleeps.every(value => value > 0 && value <= 100));
+});
+
+test("returns false by the deadline when an injected health probe never settles", async () => {
+  const calls: string[] = [];
+  let rejectHealth!: (error: Error) => void;
+  const startedAt = Date.now();
+  const result = await ensureDaemon("http://127.0.0.1:8767/mcp", {
+    health: async () => {
+      calls.push("health");
+      return new Promise<boolean>((_resolve, reject) => { rejectHealth = reject; });
+    },
+    startSystemd: async () => { calls.push("systemd"); return true; },
+    startDetached: () => { calls.push("detached"); },
+    sleep: async () => { calls.push("sleep"); },
+    now: () => Date.now(),
+  }, 30);
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, ["health"]);
+  assert.ok(Date.now() - startedAt < 250);
+  rejectHealth(new Error("late health failure"));
+  await new Promise<void>(resolve => setImmediate(resolve));
+});
+
+test("returns false by the deadline when injected systemd startup never settles", async () => {
+  const calls: string[] = [];
+  const startedAt = Date.now();
+  const result = await ensureDaemon("http://127.0.0.1:8767/mcp", {
+    health: async () => { calls.push("health"); return false; },
+    startSystemd: async () => {
+      calls.push("systemd");
+      return new Promise<boolean>(() => {});
+    },
+    startDetached: () => { calls.push("detached"); },
+    sleep: async () => { calls.push("sleep"); },
+    now: () => Date.now(),
+  }, 30);
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, ["health", "systemd"]);
+  assert.ok(Date.now() - startedAt < 250);
 });

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -126,6 +127,36 @@ function getAvailablePort(): Promise<number> {
   });
 }
 
+async function createHangingHealthServer(): Promise<{ url: string; close: () => Promise<void> }> {
+  const sockets = new Set<import("node:net").Socket>();
+  const server = createHttpServer((req) => {
+    if (req.url === "/mcp") {
+      req.socket.destroy();
+    }
+    // Deliberately leave /health open forever. Recovery must abort the request.
+  });
+  server.on("connection", socket => {
+    sockets.add(socket);
+    socket.once("close", () => sockets.delete(socket));
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      server.off("error", reject);
+      resolve();
+    });
+  });
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("Hanging health server has no TCP address");
+  return {
+    url: `http://127.0.0.1:${address.port}/mcp`,
+    close: () => new Promise<void>((resolve, reject) => {
+      for (const socket of sockets) socket.destroy();
+      server.close(error => error ? reject(error) : resolve());
+    }),
+  };
+}
+
 test("built entrypoint dispatches search and writes one compact JSON line", async () => {
   const server = await createJsonServer(body => {
     assert.deepEqual(body, {
@@ -153,6 +184,24 @@ test("built entrypoint dispatches search and writes one compact JSON line", asyn
       stdout: '{"found":1,"results":[]}\n',
       stderr: "",
     });
+  } finally {
+    await server.close();
+  }
+});
+
+test("built entrypoint bounds a health endpoint that accepts but never responds", async () => {
+  const server = await createHangingHealthServer();
+  const startedAt = Date.now();
+  try {
+    const result = await runEntrypoint(["search", "database", "--url", server.url]);
+    assert.deepEqual(result, {
+      code: 3,
+      stdout: "",
+      stderr: '{"error":{"code":"DAEMON_UNAVAILABLE","message":"Gateway daemon is unavailable"}}\n',
+    });
+    const elapsedMs = Date.now() - startedAt;
+    assert.ok(elapsedMs >= 4_500, `recovery returned too early after ${elapsedMs}ms`);
+    assert.ok(elapsedMs < 7_500, `recovery exceeded its bounded window: ${elapsedMs}ms`);
   } finally {
     await server.close();
   }
