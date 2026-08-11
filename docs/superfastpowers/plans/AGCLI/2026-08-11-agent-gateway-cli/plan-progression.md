@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-08-11 15:12
+Last updated: 2026-08-11 15:17
 
 ## Execution Policy
 
@@ -15,10 +15,10 @@ Last updated: 2026-08-11 15:12
 ## Goal Phases
 
 - Implementation: checked
-- Spec review: unchecked
+- Spec review: checked
 - Code quality: unchecked
 - Integration review: unchecked
-- Next action: Rerun plan-scoped spec review, then code quality and integration review.
+- Next action: Run the plan-scoped code-quality review.
 
 ## Task 1: Parse Commands and Stabilize Output
 
