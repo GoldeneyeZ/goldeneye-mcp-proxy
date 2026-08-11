@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-08-11 15:23
+Last updated: 2026-08-11 15:29
 
 ## Execution Policy
 
@@ -17,35 +17,36 @@ Last updated: 2026-08-11 15:23
 - Implementation: checked
 - Spec review: checked
 - Code quality: checked
-- Integration review: unchecked
-- Next action: Run the final plan-scoped integration review.
+- Integration review: checked
+- Goal: complete
+- Next action: Branch handoff/integration choice.
 
 ## Task 1: Parse Commands and Stabilize Output
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-1/`
-- Status: implemented
-- Next action: Await plan-scoped re-review.
+- Status: complete
+- Next action: None.
 
 ## Task 2: Parse JSON and Call Gateway JSON-RPC
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-2/`
-- Status: implemented
-- Next action: Await plan-scoped reviews after all tasks are implemented.
+- Status: complete
+- Next action: None.
 
 ## Task 3: Recover Daemon and Run Commands
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-3/`
-- Status: implemented
-- Next action: Await plan-scoped re-review.
+- Status: complete
+- Next action: None.
 
 ## Task 4: Integrate Executable and Preserve Legacy Modes
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-4/`
-- Status: implemented
-- Next action: Await plan-scoped re-review.
+- Status: complete
+- Next action: None.
 
 ## Task 5: Bundle Agent Skill and Documentation
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-5/`
-- Status: implemented
-- Next action: Await plan-scoped re-review.
+- Status: complete
+- Next action: None.
