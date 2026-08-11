@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-08-11 13:09
+Last updated: 2026-08-11 13:18
 
 ## Execution Policy
 
@@ -14,11 +14,11 @@ Last updated: 2026-08-11 13:09
 
 ## Goal Phases
 
-- Implementation: active
-- Spec review: failed
+- Implementation: checked
+- Spec review: unchecked
 - Code quality: unchecked
 - Integration review: unchecked
-- Next action: Repair AGCLI-4 top-level unknown-option validation.
+- Next action: Rerun plan-scoped spec review.
 
 ## Task 1: Parse Commands and Stabilize Output
 
@@ -41,8 +41,8 @@ Last updated: 2026-08-11 13:09
 ## Task 4: Integrate Executable and Preserve Legacy Modes
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-4/`
-- Status: implementing
-- Next action: Reject unknown and malformed top-level options without starting stdio.
+- Status: implemented
+- Next action: Await plan-scoped reviews after all tasks are implemented.
 
 ## Task 5: Bundle Agent Skill and Documentation
 

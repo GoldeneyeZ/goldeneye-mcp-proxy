@@ -4,6 +4,8 @@
 **Task:** `AGCLI-4`
 **Commit SHA:** `14d7c79`
 **Reviewed range:** `14d7c79^..14d7c79`
+**Repair commit SHA:** `a5c91fa`
+**Repair reviewed range:** `a5c91fa^..a5c91fa`
 
 ## Starting Context
 
@@ -67,3 +69,28 @@ Files above are starting points only. Inspect any additional files needed to com
 - Repair commit: `14d7c79` (`test(cli): cover built legacy mode dispatch`).
 - Plan-scoped spec finding 2 is resolved. Findings 1 and 3 remain intentionally untouched for AGCLI-5 repair, so spec review remains failed and downstream reviews remain unchecked.
 - Generated `dist/`, package lifecycle, agent documentation, review artifacts, and unrelated worktree files were excluded from this repair commit.
+
+## Spec-Review Repair: Strict Legacy Option Validation
+
+### Files Changed
+
+- `src/index.ts`: validates top-level legacy options before legacy dispatch, rejects unknown `--...` tokens, and requires `--port` to have a decimal value in the TCP port range.
+- `tests/cli-entrypoint.test.ts`: adds built-process regression cases for unknown options plus missing, nonnumeric, zero, and out-of-range port values; keeps child-process deadlines bounded under parallel suite load.
+
+### TDD Evidence
+
+- RED: built `dist/index.js --wat` timed out with exit `124`, wrote the stdio-ready marker to stdout, and emitted legacy startup logs instead of an `INVALID_ARGS` envelope.
+- GREEN: focused built-process regression passed 1/1 across five invalid legacy invocations; each exited 2 with empty stdout and one compact stderr JSON line.
+
+### Verification
+
+- `npm run build` — PASS.
+- `node --loader ts-node/esm --test tests/cli-entrypoint.test.ts` — PASS, 9/9.
+- `npm test` — PASS, 110/110.
+- `git diff --check -- src/index.ts tests/cli-entrypoint.test.ts` — PASS.
+
+### Notes
+
+- Validation happens before `runLegacyMode`, so rejected input cannot construct or start the stdio gateway.
+- Documented no-argument/config-path, daemon/valid-port, discover, help, four migration, and six gateway-command paths remain green.
+- Generated `dist/` and unrelated worktree files were excluded from repair commit `a5c91fa`.
