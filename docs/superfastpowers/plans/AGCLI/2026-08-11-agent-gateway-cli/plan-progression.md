@@ -18,7 +18,7 @@ Last updated: 2026-08-11 12:19
 - Spec review: unchecked
 - Code quality: unchecked
 - Integration review: unchecked
-- Next action: Implement AGCLI-4.
+- Next action: Implement AGCLI-5.
 
 ## Task 1: Parse Commands and Stabilize Output
 
@@ -41,8 +41,8 @@ Last updated: 2026-08-11 12:19
 ## Task 4: Integrate Executable and Preserve Legacy Modes
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-4/`
-- Status: pending
-- Next action: Wait for AGCLI-3.
+- Status: implemented
+- Next action: Await plan-scoped reviews after all tasks are implemented.
 
 ## Task 5: Bundle Agent Skill and Documentation
 
