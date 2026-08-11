@@ -167,6 +167,19 @@ test("built entrypoint reports invalid gateway CLI input on stderr", async () =>
   });
 });
 
+test("built entrypoint does not echo supplied JSON in parser errors", async () => {
+  const suppliedJson = '{"password":"TOP_SECRET_7391"}';
+  const result = await runEntrypoint(["invoke", "srv::tool", suppliedJson]);
+
+  assert.deepEqual(result, {
+    code: 2,
+    stdout: "",
+    stderr: '{"error":{"code":"INVALID_ARGS","message":"Unexpected positional argument"}}\n',
+  });
+  assert.doesNotMatch(result.stderr, /TOP_SECRET_7391/);
+  assert.doesNotMatch(result.stderr, /\{"password"/);
+});
+
 test("built entrypoint help retains legacy modes and lists all gateway commands", async () => {
   const result = await runEntrypoint(["--help"]);
 

@@ -84,10 +84,10 @@ function parseOptions(argv: string[], allowed: readonly string[]): ParsedOptions
     const flag = argv[index];
     const value = argv[index + 1];
     if (!flag.startsWith("--")) {
-      invalid(`Unexpected positional argument: ${flag}`);
+      invalid("Unexpected positional argument");
     }
     if (!allowed.includes(flag)) {
-      invalid(`Unknown option: ${flag}`);
+      invalid("Unknown option");
     }
     if (Object.hasOwn(options, flag)) {
       invalid(`Duplicate option: ${flag}`);

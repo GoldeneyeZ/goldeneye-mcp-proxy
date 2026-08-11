@@ -158,3 +158,33 @@ test("invalid input uses stable usage error metadata", () => {
     },
   );
 });
+
+test("parser diagnostics never echo unexpected argument data", () => {
+  const suppliedJson = '{"password":"TOP_SECRET_7391"}';
+
+  for (const argv of [
+    ["invoke", "srv::tool", suppliedJson],
+    ["search", "x", "--TOP_SECRET_7391"],
+  ]) {
+    assert.throws(
+      () => parseCli(argv),
+      (error: unknown) => {
+        const message = (error as Error).message;
+        assert.doesNotMatch(message, /TOP_SECRET_7391/);
+        assert.doesNotMatch(message, /\{"password"/);
+        return true;
+      },
+    );
+  }
+});
+
+test("parser diagnostics retain safe known option names", () => {
+  assert.throws(
+    () => parseCli(["invoke", "srv::tool", "--args", "{}", "--args", "{}"]),
+    { message: "Duplicate option: --args" },
+  );
+  assert.throws(
+    () => parseCli(["invoke", "srv::tool"]),
+    { message: "Missing required option: --args" },
+  );
+});
