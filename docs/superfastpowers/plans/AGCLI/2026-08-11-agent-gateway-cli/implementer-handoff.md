@@ -42,3 +42,33 @@ After repair: rerun build, full tests, skill validation, clean package inspectio
 - README and bundled skill required no edits: both already use top-level `_ref`; skill remains valid at 374 words.
 - Fresh verification: TypeScript build PASS; full suite 114/114; package tests 3/3; clean dry-run pack 137 files with entrypoint, 21 CLI modules, skill, and skill metadata; `git diff --check` PASS.
 - State reset for re-review: all tasks implemented; goal implementation checked; spec review unchecked; code quality and integration unchecked.
+
+---
+
+## Rerun 5 Repair Required — 2026-08-11 13:59 CEST
+
+### Bound every daemon-recovery operation by the recovery deadline
+
+- `src/cli/daemon-startup.ts:30-38,54-66`: the deadline currently bounds sleeps/loop checks only. Initial and repeated health probes use unbounded `fetch`; the systemd call uses unbounded `execFile`. A never-resolving operation prevents timeout exit indefinitely.
+- Apply the one recovery deadline to every health and systemd await. Default health must abort its fetch when remaining time expires. Default systemd execution must be terminated/settled when remaining time expires. Injected operations also need a deterministic deadline race so tests cannot hang.
+- Preserve existing behavior: initial health short-circuit; systemd before detached fallback; at most one detached fallback; poll sleeps no longer than 100 ms or remaining budget; false on deadline; one gateway retry only after `DAEMON_UNAVAILABLE`.
+- Avoid unhandled late rejections from timed-out dependency promises and clean up timers/abort resources.
+
+### Required regressions and acceptance
+
+- Add daemon unit tests where health never settles and where systemd never settles. Each must return `false` within the injected deadline and must not perform out-of-order or repeated starts.
+- Add a default-dependency or built-process regression with a loopback health handler that accepts but never responds; prove bounded completion, no hanging child, stable exit `3` envelope where exercised, and bounded teardown.
+- Re-run `npm run build`, full `npm test`, skill validation, clean package/extracted smoke, all-six built command mapping, legacy modes (including `-wat` and `-h`), error/security checks, and `git diff --check`.
+- After repair: set spec review to `unchecked`, keep quality/integration `unchecked`, and rerun plan-scoped spec review.
+
+---
+
+## Rerun 5 Implementation Repair Resolved — 2026-08-11 14:08 CEST
+
+- Finding resolved by `e6cc6d8`: one absolute recovery deadline races every health, systemd, and sleep await.
+- Default health uses the deadline abort signal for `fetch`; default systemd kills `systemctl` with `SIGTERM` and settles on abort. Timers/listeners are cleaned after settlement; late dependency rejection remains handled.
+- Required injected regressions return `false` around 30-35 ms for never-settling health/systemd, preserve `health -> systemd` ordering, and perform no detached start after the deadline.
+- Required built loopback regression drops `/mcp`, accepts `/health` without responding, then exits `3` in 5.21-5.48 seconds with empty stdout and one compact `DAEMON_UNAVAILABLE` line; child/server teardown is bounded.
+- Preserved behavior remains green: initial health short-circuit, systemd before one detached fallback, 100 ms/remaining-budget polling, false at deadline, and one gateway retry only after `DAEMON_UNAVAILABLE`.
+- Fresh verification: build PASS; full suite 117/117; skill valid; clean-source package/extracted smoke PASS; dry-run package 137 files/0 required missing; manual all-six built mapping PASS; legacy/error/security tests PASS; diff check PASS.
+- State reset for re-review: all tasks implemented; goal implementation checked; spec review unchecked; code quality and integration unchecked.
