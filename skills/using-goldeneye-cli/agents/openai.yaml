@@ -1,4 +1,0 @@
-interface:
-  display_name: "Using Goldeneye CLI"
-  short_description: "Call MCP gateway tools with compact JSON"
-  default_prompt: "Use $using-goldeneye-cli to discover and call an MCP tool through the compact CLI."

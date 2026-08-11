@@ -17,4 +17,4 @@ Async polling, `_ref` slicing, endpoint selection, compact JSON parsing, exit-co
 
 ## Scope
 
-Edit only `skills/using-goldeneye-cli/SKILL.md`. Keep the existing symlink valid automatically because it targets this directory. Validate frontmatter/structure, word count, exact fast-path wording, and existing workflow guidance.
+Rename the skill to `skills/using-goldeneye-mcp/`, including frontmatter and agent metadata. Update active README/package tests and replace the discovery symlink under `/home/goldeneye/.agents/skills/`. Validate frontmatter/structure, package inclusion, exact fast-path wording, and existing fallback guidance.

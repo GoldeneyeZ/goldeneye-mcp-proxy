@@ -1,18 +1,27 @@
 ---
-name: using-goldeneye-cli
-description: Use when an agent needs to discover, inspect, invoke, poll, or paginate MCP gateway tools from a shell while minimizing schema and response tokens.
+name: using-goldeneye-mcp
+description: Use when an agent needs to discover, inspect, invoke, poll, or paginate MCP gateway tools while minimizing schema and response tokens.
 ---
 
-# Using Goldeneye CLI
+# Using Goldeneye MCP
 
 ## Overview
 
-Use the `goldeneye-mcp-proxy` 1.x CLI for compact, one-line JSON access to MCP tools. Treat returned IDs and schemas as authoritative: search, describe, then invoke.
+Use direct MCP for known tools. Use the `goldeneye-mcp-proxy` 1.x CLI as the compact fallback for discovery or shell-only access.
 
-## Required Workflow
+## Direct MCP Fast Path
 
-1. Run `search` with a natural-language capability. Select an exact returned tool ID.
-2. Run `describe` before the first invocation or whenever its schema is uncertain. Never infer argument names.
+Use direct MCP instead of this CLI when direct MCP access is available and either:
+
+- the exact tool ID and current argument schema are known; or
+- the tool was invoked successfully during the current session.
+
+If tool identity, schema, or freshness is uncertain, use the CLI workflow below. After a direct MCP schema/input mismatch, run `describe` before retrying. Run `search` only when the exact tool ID is unknown.
+
+## Required CLI Workflow
+
+1. Run `search` with a natural-language capability only when the exact tool ID is unknown. Select an exact returned tool ID.
+2. Run `describe` before the first invocation when its schema is unknown or uncertain. Never infer argument names.
 3. Choose `invoke` for bounded work or `invoke-async` for long-running work.
 4. Poll an async `jobId` with `invoke-status` until `completed` or `failed`.
 5. When any result contains `_ref`, call `get-result` only for the needed offset, limit, fields, or search. Do not fetch the full payload by default.
@@ -49,7 +58,8 @@ goldeneye-mcp-proxy get-result '<returned-_ref>' --offset 0 --limit 50 --fields 
 
 ## Common Mistakes
 
-- Calling `gateway.search` as a subcommand: use `search`.
+- Using CLI discovery when direct MCP is available and the exact tool ID/current schema are known.
+- Calling `gateway.search` as a CLI subcommand: use `search`.
 - Guessing schemas or wrapper names such as `tool_id`/`arguments`: use `describe`, then pass only upstream args to `--args`.
 - Putting secrets in inline JSON: pipe generated JSON to `--args -`.
 - Polling with anything except the returned `jobId`, or downloading all `_ref` data.

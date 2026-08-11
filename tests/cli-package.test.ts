@@ -55,8 +55,8 @@ function assertRequiredFiles(report: PackReport): void {
   for (const module of cliModules) {
     assert.ok(files.includes(`dist/cli/${module}`), `missing dist/cli/${module}`);
   }
-  assert.ok(files.includes("skills/using-goldeneye-cli/SKILL.md"));
-  assert.ok(files.includes("skills/using-goldeneye-cli/agents/openai.yaml"));
+  assert.ok(files.includes("skills/using-goldeneye-mcp/SKILL.md"));
+  assert.ok(files.includes("skills/using-goldeneye-mcp/agents/openai.yaml"));
   assert.ok(files.includes(systemdService), `missing ${systemdService}`);
 }
 
@@ -105,7 +105,7 @@ test("runtime, documentation, and package use one valid npm-first systemd unit",
 });
 
 test("agent-facing docs identify truncation references as top-level fields", () => {
-  const paths = ["AGENT-CONTEXT.md", "README.md", "skills/using-goldeneye-cli/SKILL.md"];
+  const paths = ["AGENT-CONTEXT.md", "README.md", "skills/using-goldeneye-mcp/SKILL.md"];
   const docs = paths.map(path => [path, readFileSync(join(repositoryRoot, path), "utf8")] as const);
   const metadataRefClaims = [
     /metadata\._?ref/i,
@@ -123,6 +123,12 @@ test("agent-facing docs identify truncation references as top-level fields", () 
 
   const agentContext = docs[0][1];
   assert.match(agentContext, /top-level `_ref`, `_truncated`, and `_note`/);
+
+  const skill = docs[2][1];
+  assert.match(skill, /Use direct MCP instead of this CLI/);
+  assert.match(skill, /exact tool ID and current argument schema are known/);
+  assert.match(skill, /invoked successfully during the current session/);
+  assert.match(skill, /Run `search` only when the exact tool ID is unknown/);
 });
 
 test("clean npm package builds and includes the CLI and agent skill", async () => {

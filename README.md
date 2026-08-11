@@ -145,7 +145,7 @@ Otherwise the endpoint resolves from `MCP_GATEWAY_URL`, then defaults to
 Exit codes are `0` success, `2` invalid input, `3` daemon unavailable, `4` gateway
 failure, and `5` internal/transport failure. Errors are compact JSON on stderr.
 
-The npm package also bundles the `using-goldeneye-cli` agent skill under `skills/`.
+The npm package also bundles the `using-goldeneye-mcp` agent skill under `skills/`.
 
 ---
 
