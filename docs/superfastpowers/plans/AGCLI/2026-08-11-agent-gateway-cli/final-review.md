@@ -23,7 +23,7 @@ Reviewed at: 2026-08-11 15:29 CEST
 - `systemd-analyze verify goldeneye-mcp-proxy.service`: passed; exactly one active npm-first `ExecStart`.
 - Official `quick_validate.py skills/using-goldeneye-cli`: `Skill is valid!`.
 - `git diff --check b9f1a2f^..HEAD`: passed.
-- Repository search found no `codebase-memory-mcp` or equivalent codebase-memory references outside ignored generated/dependency metadata.
+- Repository search found no references to the removed legacy memory integration outside ignored generated/dependency metadata.
 
 ## Integration Audit
 
