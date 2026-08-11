@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile as execFileCallback } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync } from "node:fs";
+import { accessSync, constants, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -60,14 +60,48 @@ function assertRequiredFiles(report: PackReport): void {
   assert.ok(files.includes(systemdService), `missing ${systemdService}`);
 }
 
-test("runtime, documentation, and package use the canonical systemd unit", () => {
+function assertDefaultNpmServiceUnit(unit: string, source: string): void {
+  const execStarts = unit
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line.startsWith("ExecStart="));
+
+  assert.deepEqual(execStarts, [
+    "ExecStart=/usr/bin/env goldeneye-mcp-proxy --daemon %h/.config/goldeneye-mcp-proxy/config.json",
+  ], `${source} must have exactly one active npm ExecStart`);
+  assert.doesNotMatch(unit, /\/path\/to\/|\/home\/username\//, `${source} contains a placeholder path`);
+  assert.match(unit, /^Environment=PATH=.*%h\/\.local\/share\/pnpm/m, `${source} omits the common pnpm bin path`);
+  assert.match(unit, /^Environment=PATH=.*%h\/\.npm-global\/bin/m, `${source} omits the common npm user bin path`);
+  accessSync("/usr/bin/env", constants.X_OK);
+}
+
+async function assertSystemdUnitValid(path: string): Promise<void> {
+  try {
+    await execFile("systemd-analyze", ["--version"]);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+    throw error;
+  }
+  await execFile("systemd-analyze", ["verify", path]);
+}
+
+test("runtime, documentation, and package use one valid npm-first systemd unit", async () => {
   const daemonStartup = readFileSync(join(repositoryRoot, "src", "cli", "daemon-startup.ts"), "utf8");
   const readme = readFileSync(join(repositoryRoot, "README.md"), "utf8");
+  const setupPrompt = readFileSync(join(repositoryRoot, "SETUP_PROMPT.md"), "utf8");
+  const unitPath = join(repositoryRoot, systemdService);
+  const unit = readFileSync(unitPath, "utf8");
 
   assert.match(daemonStartup, new RegExp(`SYSTEMD_SERVICE = ["']${systemdService}["']`));
   assert.match(readme, new RegExp(`cp .*${systemdService}`));
   assert.match(readme, new RegExp(`${systemdService}.*Systemd user service unit`));
   assert.doesNotMatch(readme, /goldeneye\.service/);
+  for (const [source, instructions] of [["README", readme], ["setup prompt", setupPrompt]] as const) {
+    assert.doesNotMatch(instructions, /uncomment/i, `${source} tells users to activate a second ExecStart`);
+    assert.match(instructions, /replace the single `ExecStart` line/i, `${source} omits source-clone replacement guidance`);
+  }
+  assertDefaultNpmServiceUnit(unit, "repository unit");
+  await assertSystemdUnitValid(unitPath);
 });
 
 test("agent-facing docs identify truncation references as top-level fields", () => {
@@ -94,6 +128,9 @@ test("agent-facing docs identify truncation references as top-level fields", () 
 test("clean npm package builds and includes the CLI and agent skill", async () => {
   const fixture = createCleanPackageFixture();
   try {
+    const copiedUnitPath = join(fixture, systemdService);
+    assertDefaultNpmServiceUnit(readFileSync(copiedUnitPath, "utf8"), "copied unit");
+    await assertSystemdUnitValid(copiedUnitPath);
     assertRequiredFiles(await npmPack(fixture, true));
   } finally {
     rmSync(fixture, { recursive: true, force: true });
@@ -126,10 +163,11 @@ test("packed executable provides help and dispatches search", async () => {
     mkdirSync(extracted);
     await execFile("tar", ["-xzf", join(fixture, basename(report.filename)), "-C", extracted, "--strip-components=1"]);
     symlinkSync(join(repositoryRoot, "node_modules"), join(extracted, "node_modules"), "dir");
-    assert.equal(
-      readFileSync(join(extracted, systemdService), "utf8"),
-      readFileSync(join(repositoryRoot, systemdService), "utf8"),
-    );
+    const extractedUnitPath = join(extracted, systemdService);
+    const extractedUnit = readFileSync(extractedUnitPath, "utf8");
+    assert.equal(extractedUnit, readFileSync(join(repositoryRoot, systemdService), "utf8"));
+    assertDefaultNpmServiceUnit(extractedUnit, "extracted unit");
+    await assertSystemdUnitValid(extractedUnitPath);
 
     const executable = join(extracted, "dist", "index.js");
     const { stdout: help, stderr: helpError } = await execFile(process.execPath, [executable, "--help"]);

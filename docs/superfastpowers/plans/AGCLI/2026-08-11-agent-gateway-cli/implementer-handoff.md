@@ -138,3 +138,24 @@ After repair: rerun build, full tests, skill validation, clean package inspectio
 - RED: package suite failed 2/4 on the missing canonical unit. GREEN: package suite passed 4/4 after the rename.
 - Fresh verification: build PASS; full suite 120/120; dry-run package 138 files with canonical unit, executable, skill, and metadata; extracted unit content verified; skill validation PASS; scoped diff check PASS.
 - State reset for re-review: all tasks implemented; goal implementation checked; spec review, code quality, and integration unchecked.
+
+---
+
+## Code-Quality Rerun Repair Required — 2026-08-11 14:59 CEST
+
+### Make the packaged systemd unit valid for the documented npm flow
+
+- Severity: important; behavioral package/recovery integration.
+- `goldeneye-mcp-proxy.service:13,20` contains a commented npm `ExecStart` and an active source-placeholder `ExecStart=/usr/bin/node /path/to/...`.
+- `README.md:340-358` tells npm users to copy the unit, replace the home placeholder, and uncomment the npm line, but does not tell them to disable the active source placeholder. Following those steps produces two active `ExecStart` directives for `Type=simple`; `systemd-analyze verify` exits `1` and refuses the unit. Leaving the npm line commented instead executes a nonexistent `/path/to/...` path.
+- Make the recommended packaged/npm mode the unambiguous valid default with exactly one active runnable command, or provide separate valid unit templates. Keep source-clone customization explicit and make README commands match the actual file.
+- Extend package coverage beyond filename/byte inclusion: verify exactly one active `ExecStart` after the documented npm installation transformation, validate the unit with `systemd-analyze verify` when available (portable structural fallback otherwise), and retain runtime/package/README canonical-name assertions plus extracted-package equality.
+
+Acceptance: copying the packed unit and following the documented npm steps yields one active valid `ExecStart`; `systemd-analyze verify` passes; `systemctl --user start goldeneye-mcp-proxy.service` targets the same packaged filename; clean source-only `npm test`, build, pack, skill validation, and diff checks pass. Reset spec review, quality, and integration to unchecked and rerun plan-scoped spec review before quality.
+
+### Resolution — 2026-08-11 15:12 CEST
+
+- Packaged unit now defaults to one npm/pnpm-ready `ExecStart` via `/usr/bin/env`, with common global package bin paths supplied through `PATH` and no placeholder paths.
+- README and setup prompt now describe the ready default and a single-line source-clone replacement.
+- Package tests assert one active command, no placeholders, packaged equality, and run `systemd-analyze verify` when available.
+- Fresh verification: full suite 120/120; `systemd-analyze verify` exit 0; diff check clean.

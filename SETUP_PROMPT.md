@@ -74,11 +74,11 @@ cp $(npm root -g)/goldeneye-mcp-proxy/goldeneye-mcp-proxy.service ~/.config/syst
 # If cloned from source:
 # cp goldeneye-mcp-proxy.service ~/.config/systemd/user/
 
-# Edit the service file to match your setup:
-# - For npm install: uncomment the "goldeneye-mcp-proxy --daemon" ExecStart line
-# - For source clone: set the full path to dist/index.js
-# Update the config path to your actual home directory:
-sed -i "s|/home/username/|$HOME/|" ~/.config/systemd/user/goldeneye-mcp-proxy.service
+# For npm/pnpm global install, the copied unit is ready as-is.
+# For a source clone, replace the single `ExecStart` line from the repository root:
+sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/node $(realpath dist/index.js) --daemon %h/.config/goldeneye-mcp-proxy/config.json|" \
+  ~/.config/systemd/user/goldeneye-mcp-proxy.service
+# Keep exactly one active ExecStart line.
 ```
 
 Enable and start the service:

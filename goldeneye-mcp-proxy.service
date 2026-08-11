@@ -5,22 +5,11 @@ After=network.target
 
 [Service]
 Type=simple
-# ───────────────────────────────────────────────────────────────────
-# OPTION A — Installed from npm (recommended):
-#   npm install -g goldeneye-mcp-proxy
-#   Then the binary is available in your PATH:
-#
-#   ExecStart=goldeneye-mcp-proxy --daemon /home/username/.config/goldeneye-mcp-proxy/config.json
-#
-# OPTION B — Cloned repo (replace paths with your actual install dir):
-#
-#   ExecStart=/usr/bin/node /path/to/goldeneye-mcp-proxy/dist/index.js --daemon /home/username/.config/goldeneye-mcp-proxy/config.json
-#
-# ───────────────────────────────────────────────────────────────────
-ExecStart=/usr/bin/node /path/to/goldeneye-mcp-proxy/dist/index.js --daemon /home/username/.config/goldeneye-mcp-proxy/config.json
+Environment=NODE_ENV=production
+Environment=PATH=%h/.local/bin:%h/.npm-global/bin:%h/.local/share/pnpm:/usr/local/bin:/usr/bin
+ExecStart=/usr/bin/env goldeneye-mcp-proxy --daemon %h/.config/goldeneye-mcp-proxy/config.json
 Restart=on-failure
 RestartSec=5
-Environment=NODE_ENV=production
 StandardOutput=journal
 StandardError=journal
 
