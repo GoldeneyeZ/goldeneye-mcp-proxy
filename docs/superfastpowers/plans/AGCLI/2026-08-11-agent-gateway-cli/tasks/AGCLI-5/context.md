@@ -107,3 +107,32 @@ Files above are starting points only. Inspect any additional files needed to com
 - Repair commit: `5319b69` (`docs(cli): fix truncation reference location`).
 - No skill content changed; packaged skill validation and selective top-level `_ref` guidance remain accurate.
 - No task-scoped review run under bypass policy.
+
+## Code-Quality Repair: Canonical Packaged Systemd Unit
+
+### Files Changed
+
+- `goldeneye.service` renamed to `goldeneye-mcp-proxy.service` with byte-identical content.
+- `tests/cli-package.test.ts` copies and requires the canonical unit in the clean fixture and dry-run manifest, verifies the extracted unit matches the repository asset, and checks runtime/README naming alignment.
+
+### TDD Evidence
+
+- RED: focused package suite failed 2/4 because the clean fixture could not copy missing `goldeneye-mcp-proxy.service`.
+- GREEN: focused package suite passed 4/4 after the scoped rename.
+- Runtime/package proof: the regression scans `SYSTEMD_SERVICE` for the canonical filename and requires that same filename in both dry-run and extracted package checks.
+
+### Verification
+
+- `node --loader ts-node/esm --test tests/cli-package.test.ts` — PASS, 4/4.
+- `npm run build` — PASS.
+- `npm test` — PASS, 120/120.
+- `npm pack --dry-run --json --silent` — PASS, 138 files; canonical unit, executable, skill, and skill metadata present.
+- Extracted package smoke — PASS; packaged unit content equals the repository unit.
+- `quick_validate.py skills/using-goldeneye-cli` — `Skill is valid!`.
+- Unit preservation SHA-256 — old and canonical files both `6db9691a889b99b1d0c16a13281886851f0ccea9edc4738d4dcb6f792a891457`.
+- Scoped `git diff --check` — PASS.
+
+### Commit
+
+- Repair: `65bd5a3` (`fix(package): ship canonical systemd unit`).
+- No task-scoped review run under bypass policy.

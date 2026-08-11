@@ -101,3 +101,40 @@ After repair: rerun build, full tests, skill validation, clean package inspectio
 - Fresh evidence: CLI returned stable exit `3` in 5.306 seconds; recorded PID `553088` was absent at completion. Focused CLI/daemon/runner tests passed 28/28.
 - Fresh verification: build PASS; full suite 118/118; skill validation PASS; clean package/extracted smoke PASS within the full suite; dry-run package 137 files/0 required missing; legacy, all-six mapping, security/error/recovery tests PASS; diff check PASS.
 - State reset for re-review: all tasks implemented; goal implementation checked; spec review unchecked; code quality and integration unchecked.
+
+---
+
+## Code-Quality Repair Required — 2026-08-11 14:33 CEST
+
+### 1. Make `npm test` independent of generated worktree state
+
+- `tests/cli-entrypoint.test.ts` executes repository `dist/index.js`, but `package.json` does not build before testing and reviewed commit `d1d1087` has stale tracked `dist/index.*` with no committed `dist/cli/`.
+- A clean archived checkout running exactly `npm test` timed out/failed in built-entrypoint tests; stale `--wat` entered stdio and leaked a child until the reviewer terminated that exact process tree. Current dirty/generated-tree tests pass, proving order dependence.
+- Build the executable under test freshly as part of the canonical test workflow. Prefer an isolated temp build so tests do not modify tracked `dist`; ensure every built-entrypoint test shares or receives that fresh executable and teardown is bounded on failure.
+- Add acceptance evidence from a clean committed/source-only fixture running exactly `npm test`, without a preceding manual build and without new repository dirt or live children.
+
+### 2. Align and package the systemd unit used by recovery
+
+- Runtime and README use `goldeneye-mcp-proxy.service`; repository contains only `goldeneye.service`; the npm tarball contains no service file despite the package allowlist and README claim.
+- Choose one canonical filename and align `src/cli/daemon-startup.ts`, the actual unit file, `package.json`, and README installation commands.
+- Add the unit to the clean package fixture and assert it is present in `npm pack`; prove the systemd-first invocation targets that packaged unit name.
+
+### Acceptance
+
+- Fresh source-only/clean checkout `npm test` passes without a manual build, stale generated output, worktree mutations, or leaked processes.
+- Current full suite and TypeScript build pass; built legacy/new/error/recovery coverage remains green.
+- `npm pack --dry-run --json --silent` and extracted package contain the canonical service unit, executable, all CLI modules, and skill artifacts.
+- README service installation commands name a file that actually ships; runtime `systemctl --user start` uses the same unit.
+- Skill validation and diff checks pass.
+- This package/runtime mismatch is behavioral, so rerun plan-scoped spec review before code quality; keep integration unchecked.
+
+---
+
+## Code-Quality Implementation Repairs Resolved — 2026-08-11 14:48 CEST
+
+- Finding 1 resolved by `240e0e0`: built-entrypoint tests use a fresh isolated build rather than repository `dist`; canonical `npm test` no longer depends on stale generated output.
+- Finding 2 resolved by `65bd5a3`: repository unit is now the canonical `goldeneye-mcp-proxy.service`, with byte-identical content to the obsolete filename.
+- Package regressions copy and require the unit in a clean dry-run fixture, verify it in the extracted tarball, and check the runtime `SYSTEMD_SERVICE` and README use the same canonical name.
+- RED: package suite failed 2/4 on the missing canonical unit. GREEN: package suite passed 4/4 after the rename.
+- Fresh verification: build PASS; full suite 120/120; dry-run package 138 files with canonical unit, executable, skill, and metadata; extracted unit content verified; skill validation PASS; scoped diff check PASS.
+- State reset for re-review: all tasks implemented; goal implementation checked; spec review, code quality, and integration unchecked.

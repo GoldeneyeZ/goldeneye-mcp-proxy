@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-08-11 14:22
+Last updated: 2026-08-11 14:48
 
 ## Execution Policy
 
@@ -18,7 +18,7 @@ Last updated: 2026-08-11 14:22
 - Spec review: unchecked
 - Code quality: unchecked
 - Integration review: unchecked
-- Next action: Rerun plan-scoped spec review.
+- Next action: Rerun plan-scoped spec review, then code quality and integration review.
 
 ## Task 1: Parse Commands and Stabilize Output
 
