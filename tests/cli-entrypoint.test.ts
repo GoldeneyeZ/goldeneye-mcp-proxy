@@ -202,6 +202,7 @@ test("built entrypoint rejects malformed and unsupported resolved endpoints with
 test("built entrypoint rejects unknown and malformed legacy options before stdio startup", async () => {
   const cases = [
     { args: ["--wat"], message: "Unknown legacy option" },
+    { args: ["-wat"], message: "Unknown legacy option" },
     { args: ["--port"], message: "Missing value for --port" },
     { args: ["--port", "not-a-port"], message: "Invalid value for --port" },
     { args: ["--port", "0"], message: "Invalid value for --port" },
@@ -232,22 +233,24 @@ test("built entrypoint does not echo supplied JSON in parser errors", async () =
   assert.doesNotMatch(result.stderr, /\{"password"/);
 });
 
-test("built entrypoint help retains legacy modes and lists all gateway commands", async () => {
-  const result = await runEntrypoint(["--help"]);
+test("built entrypoint help aliases retain legacy modes and list all gateway commands", async () => {
+  for (const helpAlias of ["--help", "-h"]) {
+    const result = await runEntrypoint([helpAlias]);
 
-  assert.equal(result.code, 0);
-  assert.equal(result.stderr, "");
-  for (const legacyOption of [
-    "--port", "--daemon", "--discover", "--defer-codex-skills",
-    "--restore-codex-skills", "--defer-agents-skills", "--restore-agents-skills",
-    "--dry-run",
-  ]) {
-    assert.match(result.stdout, new RegExp(legacyOption));
-  }
-  for (const command of [
-    "search", "describe", "invoke", "invoke-async", "invoke-status", "get-result",
-  ]) {
-    assert.match(result.stdout, new RegExp(`goldeneye-mcp-proxy ${command}(?: |\\n)`));
+    assert.equal(result.code, 0, helpAlias);
+    assert.equal(result.stderr, "", helpAlias);
+    for (const legacyOption of [
+      "--port", "--daemon", "--discover", "--defer-codex-skills",
+      "--restore-codex-skills", "--defer-agents-skills", "--restore-agents-skills",
+      "--dry-run",
+    ]) {
+      assert.match(result.stdout, new RegExp(legacyOption), helpAlias);
+    }
+    for (const command of [
+      "search", "describe", "invoke", "invoke-async", "invoke-status", "get-result",
+    ]) {
+      assert.match(result.stdout, new RegExp(`goldeneye-mcp-proxy ${command}(?: |\\n)`), helpAlias);
+    }
   }
 });
 

@@ -42,6 +42,7 @@ const LEGACY_OPTIONS = new Set([
   "--restore-agents-skills",
   "--dry-run",
   "--help",
+  "-h",
 ]);
 
 const args = process.argv.slice(2);
@@ -68,7 +69,7 @@ function validateLegacyArgs(legacyArgs: string[]): CliError | undefined {
       if (!/^\d+$/.test(value) || Number(value) < 1 || Number(value) > 65_535) {
         return new CliError("INVALID_ARGS", "Invalid value for --port", 2);
       }
-    } else if (argument.startsWith("--") && !LEGACY_OPTIONS.has(argument)) {
+    } else if (argument.startsWith("-") && !LEGACY_OPTIONS.has(argument)) {
       return new CliError("INVALID_ARGS", "Unknown legacy option", 2);
     }
   }
