@@ -28,63 +28,72 @@
 import { MCPGateway } from "./gateway/MCPGateway.js";
 import { HttpMcpServer } from "./transports/http/HttpMcpServer.js";
 import { SkillMigrationService } from "./skills/SkillMigrationService.js";
-
-// Parse CLI arguments
-let configPath: string | undefined;
-let port: number | undefined;
-let discoverMode = false;
-let helpMode = false;
-let deferCodexSkills = false;
-let restoreCodexSkills = false;
-let deferAgentsSkills = false;
-let restoreAgentsSkills = false;
-let dryRun = false;
+import { isGatewayCliCommand } from "./cli/parse-cli.js";
+import { runCli } from "./cli/run-cli.js";
 
 const args = process.argv.slice(2);
-for (let i = 0; i < args.length; i++) {
-  if (args[i] === "--port" && i + 1 < args.length) {
-    port = parseInt(args[++i], 10);
-  } else if (args[i] === "--daemon") {
-    port = 8767;
-  } else if (args[i] === "--discover") {
-    discoverMode = true;
-  } else if (args[i] === "--defer-codex-skills") {
-    deferCodexSkills = true;
-  } else if (args[i] === "--restore-codex-skills") {
-    restoreCodexSkills = true;
-  } else if (args[i] === "--defer-agents-skills") {
-    deferAgentsSkills = true;
-  } else if (args[i] === "--restore-agents-skills") {
-    restoreAgentsSkills = true;
-  } else if (args[i] === "--dry-run") {
-    dryRun = true;
-  } else if (args[i] === "--help" || args[i] === "-h") {
-    helpMode = true;
-  } else if (!args[i].startsWith("--")) {
-    configPath = args[i];
-  }
+if (isGatewayCliCommand(args[0])) {
+  process.exitCode = await runCli(args);
+} else {
+  runLegacyMode(args);
 }
 
-if (helpMode) {
-  printUsage();
-} else if (deferCodexSkills || restoreCodexSkills || deferAgentsSkills || restoreAgentsSkills) {
-  runSkillMigration({
-    deferCodexSkills,
-    restoreCodexSkills,
-    deferAgentsSkills,
-    restoreAgentsSkills,
-    dryRun,
-  });
-} else if (discoverMode) {
-  runDiscovery(configPath);
-} else if (port) {
-  // ── HTTP daemon mode ──
-  // Start the gateway, connect to all upstream MCP servers,
-  // then serve the same 6 gateway tools over HTTP.
-  startDaemon(configPath, port);
-} else {
-  // ── Stdio mode (original behavior) ──
-  startStdio(configPath);
+function runLegacyMode(legacyArgs: string[]): void {
+  let configPath: string | undefined;
+  let port: number | undefined;
+  let discoverMode = false;
+  let helpMode = false;
+  let deferCodexSkills = false;
+  let restoreCodexSkills = false;
+  let deferAgentsSkills = false;
+  let restoreAgentsSkills = false;
+  let dryRun = false;
+
+  for (let i = 0; i < legacyArgs.length; i++) {
+    if (legacyArgs[i] === "--port" && i + 1 < legacyArgs.length) {
+      port = parseInt(legacyArgs[++i], 10);
+    } else if (legacyArgs[i] === "--daemon") {
+      port = 8767;
+    } else if (legacyArgs[i] === "--discover") {
+      discoverMode = true;
+    } else if (legacyArgs[i] === "--defer-codex-skills") {
+      deferCodexSkills = true;
+    } else if (legacyArgs[i] === "--restore-codex-skills") {
+      restoreCodexSkills = true;
+    } else if (legacyArgs[i] === "--defer-agents-skills") {
+      deferAgentsSkills = true;
+    } else if (legacyArgs[i] === "--restore-agents-skills") {
+      restoreAgentsSkills = true;
+    } else if (legacyArgs[i] === "--dry-run") {
+      dryRun = true;
+    } else if (legacyArgs[i] === "--help" || legacyArgs[i] === "-h") {
+      helpMode = true;
+    } else if (!legacyArgs[i].startsWith("--")) {
+      configPath = legacyArgs[i];
+    }
+  }
+
+  if (helpMode) {
+    printUsage();
+  } else if (deferCodexSkills || restoreCodexSkills || deferAgentsSkills || restoreAgentsSkills) {
+    runSkillMigration({
+      deferCodexSkills,
+      restoreCodexSkills,
+      deferAgentsSkills,
+      restoreAgentsSkills,
+      dryRun,
+    });
+  } else if (discoverMode) {
+    runDiscovery(configPath);
+  } else if (port) {
+    // ── HTTP daemon mode ──
+    // Start the gateway, connect to all upstream MCP servers,
+    // then serve the same 6 gateway tools over HTTP.
+    startDaemon(configPath, port);
+  } else {
+    // ── Stdio mode (original behavior) ──
+    startStdio(configPath);
+  }
 }
 
 function printUsage(): void {
@@ -97,6 +106,12 @@ function printUsage(): void {
   goldeneye-mcp-proxy --restore-codex-skills [--dry-run]
   goldeneye-mcp-proxy --defer-agents-skills [--dry-run]
   goldeneye-mcp-proxy --restore-agents-skills [--dry-run]
+  goldeneye-mcp-proxy search <query> [--server <key>] [--limit <n>] [--url <endpoint>]
+  goldeneye-mcp-proxy describe <tool-id> [--url <endpoint>]
+  goldeneye-mcp-proxy invoke <tool-id> --args <json|-> [--timeout <ms>] [--url <endpoint>]
+  goldeneye-mcp-proxy invoke-async <tool-id> --args <json|-> [--url <endpoint>]
+  goldeneye-mcp-proxy invoke-status <job-id> [--url <endpoint>]
+  goldeneye-mcp-proxy get-result <ref> [--offset <n>] [--limit <n>] [--fields <a,b>] [--search <text>] [--url <endpoint>]
   goldeneye-mcp-proxy --help
 
 Options:
@@ -108,6 +123,7 @@ Options:
   --defer-agents-skills    Rename ~/.agents/skills to ~/.agents/skills.deferred.
   --restore-agents-skills  Restore ~/.agents/skills.deferred to ~/.agents/skills.
   --dry-run       Show migration changes without mutating files.
+  --url <endpoint>  Use this gateway MCP endpoint (all gateway commands).
   --help, -h     Print this help text and exit.`);
 }
 
