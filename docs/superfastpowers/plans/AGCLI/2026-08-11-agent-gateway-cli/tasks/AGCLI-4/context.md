@@ -2,8 +2,8 @@
 
 **Plan:** `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli.md`
 **Task:** `AGCLI-4`
-**Commit SHA:** `9214ece`
-**Reviewed range:** `9214ece^..9214ece`
+**Commit SHA:** `14d7c79`
+**Reviewed range:** `14d7c79^..14d7c79`
 
 ## Starting Context
 
@@ -41,3 +41,29 @@ Files above are starting points only. Inspect any additional files needed to com
 - Legacy no-argument, config-path, `--port`, `--daemon`, `--discover`, and skill-migration parsing/dispatch remain in the same precedence and branch order inside `runLegacyMode`.
 - Only a recognized first token enters gateway CLI mode; malformed recognized commands therefore emit the stable CLI error envelope instead of starting stdio.
 - Generated `dist/` output and unrelated pre-existing untracked files were excluded from commit `9214ece`.
+
+## Spec-Review Repair: Built Legacy Compatibility
+
+### Files Changed
+
+- `tests/cli-entrypoint.test.ts`: adds built-process regression coverage for no-argument and distinct positional-config stdio startup, `--daemon`, explicit `--port`, `--discover`, and all four skill-migration modes.
+
+### Process Isolation and Teardown
+
+- Every legacy process uses an empty disposable config and isolated `HOME`.
+- Long-running stdio/daemon children synchronize on mode-specific startup output, receive `SIGTERM`, and have a bounded `SIGKILL` fallback.
+- The explicit-port test reserves a disposable loopback port; discovery and migration modes use bounded `execFile` calls.
+- Skill migrations use isolated directories plus `--dry-run`, and every fixture is removed in `finally`.
+
+### TDD and Verification
+
+- Initial characterization: real built behavior passed, confirming the repair was coverage-only.
+- Watched RED mutation: a temporary entrypoint that routed legacy tokens into `search` left the two gateway-command tests green and failed all five legacy/help process tests with exit `2` / `INVALID_ARGS`; the mutation was then removed.
+- GREEN: `npm run build && node --loader ts-node/esm --test tests/cli-entrypoint.test.ts` passed 7/7.
+- Full regression: `npm test` passed 105/105; `git diff --check` passed.
+
+### Repair Notes
+
+- Repair commit: `14d7c79` (`test(cli): cover built legacy mode dispatch`).
+- Plan-scoped spec finding 2 is resolved. Findings 1 and 3 remain intentionally untouched for AGCLI-5 repair, so spec review remains failed and downstream reviews remain unchecked.
+- Generated `dist/`, package lifecycle, agent documentation, review artifacts, and unrelated worktree files were excluded from this repair commit.
