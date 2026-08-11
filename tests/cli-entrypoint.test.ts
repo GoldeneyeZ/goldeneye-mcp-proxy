@@ -1,17 +1,29 @@
-import test from "node:test";
+import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 // @ts-expect-error Native Node TypeScript execution requires the source extension.
 import { createJsonServer } from "./helpers/cli-http-server.ts";
+// @ts-expect-error Native Node TypeScript execution requires the source extension.
+import { createBuiltCli, type BuiltCli } from "./helpers/built-cli.ts";
 
-const entrypoint = fileURLToPath(new URL("../dist/index.js", import.meta.url));
+let builtCli: BuiltCli | undefined;
+let entrypoint: string;
 const processDeadlineMs = 10_000;
+
+before(async () => {
+  builtCli = await createBuiltCli();
+  entrypoint = builtCli.entrypoint;
+});
+
+after(() => {
+  return builtCli?.dispose();
+});
 
 interface ExecResult {
   code: number;
@@ -179,6 +191,13 @@ async function createHangingHealthServer(): Promise<{ url: string; close: () => 
     }),
   };
 }
+
+test("built entrypoint uses a fresh isolated build outside the repository", () => {
+  assert.ok(builtCli);
+  const repository = fileURLToPath(new URL("../", import.meta.url));
+  assert.match(relative(repository, builtCli.buildRoot), /^\.\.(?:\/|$)/);
+  assert.equal(entrypoint, join(builtCli.buildRoot, "dist", "index.js"));
+});
 
 test("built entrypoint dispatches search and writes one compact JSON line", async () => {
   const server = await createJsonServer(body => {
