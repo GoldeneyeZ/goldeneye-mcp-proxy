@@ -168,6 +168,37 @@ test("built entrypoint reports invalid gateway CLI input on stderr", async () =>
   });
 });
 
+test("built entrypoint rejects malformed and unsupported resolved endpoints without leaking them", async () => {
+  const cases = [
+    {
+      args: ["search", "database", "--url", "not-a-url?token=FLAG_SECRET_7391"],
+      env: process.env,
+    },
+    {
+      args: ["search", "database", "--url", "file:///tmp/FLAG_SECRET_7391.sock"],
+      env: process.env,
+    },
+    {
+      args: ["search", "database"],
+      env: { ...process.env, MCP_GATEWAY_URL: "malformed?token=ENV_SECRET_7391" },
+    },
+    {
+      args: ["search", "database"],
+      env: { ...process.env, MCP_GATEWAY_URL: "ftp://user:ENV_SECRET_7391@example.test/mcp?token=query-secret" },
+    },
+  ];
+
+  for (const testCase of cases) {
+    const result = await runEntrypoint(testCase.args, testCase.env);
+    assert.deepEqual(result, {
+      code: 2,
+      stdout: "",
+      stderr: '{"error":{"code":"INVALID_ARGS","message":"Gateway URL must be an absolute http: or https: URL"}}\n',
+    });
+    assert.doesNotMatch(result.stderr, /FLAG_SECRET_7391|ENV_SECRET_7391|query-secret|example\.test|malformed/);
+  }
+});
+
 test("built entrypoint rejects unknown and malformed legacy options before stdio startup", async () => {
   const cases = [
     { args: ["--wat"], message: "Unknown legacy option" },

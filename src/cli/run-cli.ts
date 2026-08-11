@@ -19,7 +19,7 @@ export interface RunCliDeps {
 export async function runCli(argv: string[], deps: RunCliDeps = createDefaultRunCliDeps()): Promise<number> {
   try {
     const command = parseCli(argv);
-    const url = command.url ?? deps.env.MCP_GATEWAY_URL ?? DEFAULT_GATEWAY_URL;
+    const url = validateGatewayUrl(command.url ?? deps.env.MCP_GATEWAY_URL ?? DEFAULT_GATEWAY_URL);
     const [name, args] = await toGatewayCall(command, deps.readStdin);
 
     let result: unknown;
@@ -36,6 +36,33 @@ export async function runCli(argv: string[], deps: RunCliDeps = createDefaultRun
   } catch (error) {
     return writeFailure(error, deps.stderr).exitCode;
   }
+}
+
+function validateGatewayUrl(value: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw invalidGatewayUrl();
+  }
+
+  if (
+    (parsed.protocol !== "http:" && parsed.protocol !== "https:")
+    || parsed.hostname.length === 0
+    || parsed.username.length > 0
+    || parsed.password.length > 0
+  ) {
+    throw invalidGatewayUrl();
+  }
+  return value;
+}
+
+function invalidGatewayUrl(): CliError {
+  return new CliError(
+    "INVALID_ARGS",
+    "Gateway URL must be an absolute http: or https: URL",
+    2,
+  );
 }
 
 export function createDefaultRunCliDeps(): RunCliDeps {

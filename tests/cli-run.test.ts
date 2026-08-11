@@ -57,7 +57,7 @@ test("resolves URL by flag then environment then localhost default", async () =>
     return {};
   };
 
-  await runCli(["search", "db", "--url", "http://flag.test/mcp"], fakeCliDeps(call, undefined, {
+  await runCli(["search", "db", "--url", "https://flag.test/mcp"], fakeCliDeps(call, undefined, {
     env: { MCP_GATEWAY_URL: "http://env.test/mcp" },
   }));
   await runCli(["search", "db"], fakeCliDeps(call, undefined, {
@@ -66,10 +66,75 @@ test("resolves URL by flag then environment then localhost default", async () =>
   await runCli(["search", "db"], fakeCliDeps(call));
 
   assert.deepEqual(urls, [
-    "http://flag.test/mcp",
+    "https://flag.test/mcp",
     "http://env.test/mcp",
     "http://127.0.0.1:8767/mcp",
   ]);
+});
+
+test("rejects invalid resolved flag URLs before call or daemon recovery", async () => {
+  for (const url of [
+    "not-a-url?token=FLAG_SECRET_7391",
+    "file:///tmp/gateway.sock?token=FLAG_SECRET_7391",
+    "https://user:FLAG_SECRET_7391@example.test/mcp",
+  ]) {
+    let calls = 0;
+    let starts = 0;
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    const deps = fakeCliDeps(async () => {
+      calls += 1;
+      return {};
+    }, async () => {
+      starts += 1;
+      return true;
+    }, {
+      stdout: value => stdout.push(value),
+      stderr: value => stderr.push(value),
+    });
+
+    assert.equal(await runCli(["search", "db", "--url", url], deps), 2);
+    assert.equal(calls, 0);
+    assert.equal(starts, 0);
+    assert.deepEqual(stdout, []);
+    assert.deepEqual(stderr, [
+      '{"error":{"code":"INVALID_ARGS","message":"Gateway URL must be an absolute http: or https: URL"}}\n',
+    ]);
+    assert.doesNotMatch(stderr[0], /FLAG_SECRET_7391|gateway\.sock|not-a-url/);
+  }
+});
+
+test("rejects invalid resolved environment URLs before call or daemon recovery", async () => {
+  for (const url of [
+    "malformed?token=ENV_SECRET_7391",
+    "ftp://user:ENV_SECRET_7391@example.test/mcp?token=query-secret",
+    "http://user:ENV_SECRET_7391@example.test/mcp",
+  ]) {
+    let calls = 0;
+    let starts = 0;
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    const deps = fakeCliDeps(async () => {
+      calls += 1;
+      return {};
+    }, async () => {
+      starts += 1;
+      return true;
+    }, {
+      env: { MCP_GATEWAY_URL: url },
+      stdout: value => stdout.push(value),
+      stderr: value => stderr.push(value),
+    });
+
+    assert.equal(await runCli(["search", "db"], deps), 2);
+    assert.equal(calls, 0);
+    assert.equal(starts, 0);
+    assert.deepEqual(stdout, []);
+    assert.deepEqual(stderr, [
+      '{"error":{"code":"INVALID_ARGS","message":"Gateway URL must be an absolute http: or https: URL"}}\n',
+    ]);
+    assert.doesNotMatch(stderr[0], /ENV_SECRET_7391|query-secret|example\.test|malformed/);
+  }
 });
 
 test("reads --args - from stdin", async () => {
