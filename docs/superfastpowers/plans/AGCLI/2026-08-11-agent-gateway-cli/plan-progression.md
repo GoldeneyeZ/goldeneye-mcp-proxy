@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-08-11 12:52
+Last updated: 2026-08-11 12:59
 
 ## Execution Policy
 
@@ -14,11 +14,11 @@ Last updated: 2026-08-11 12:52
 
 ## Goal Phases
 
-- Implementation: active
-- Spec review: failed
+- Implementation: checked
+- Spec review: unchecked
 - Code quality: unchecked
 - Integration review: unchecked
-- Next action: Repair remaining AGCLI-5 package and agent-documentation findings.
+- Next action: Rerun plan-scoped spec review.
 
 ## Task 1: Parse Commands and Stabilize Output
 
@@ -48,4 +48,4 @@ Last updated: 2026-08-11 12:52
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-5/`
 - Status: implemented
-- Next action: Await plan-scoped reviews after all tasks are implemented.
+- Next action: Await plan-scoped re-review.
