@@ -19,6 +19,7 @@
     "README.md",
     "SETUP_PROMPT.md",
     "AGENT-CONTEXT.md",
+    "skills/",
     "config.example.json",
     "goldeneye-mcp-proxy.service",
     "LICENSE"

@@ -1,7 +1,8 @@
 # goldeneye-mcp-proxy — Agent Context for LLMs
 
 Copy this file into your AI coding agent's project (or feed it directly) so it
-understands how to discover, describe, and invoke tools through the gateway.
+understands how to discover, describe, and invoke tools through the compact CLI,
+with MCP gateway calls as a fallback.
 
 **Recommended placement:**
 - **Pi:** Drop into `.pi/rules/mcp-proxy-context.md` and reference in `.pi/APPEND_SYSTEM.md`
@@ -33,6 +34,10 @@ The proxy handles:
 ---
 
 ## How to Connect
+
+Prefer the installed `goldeneye-mcp-proxy` CLI for shell-capable agents. It avoids
+loading gateway schemas and returns one compact JSON value per command. Use direct
+MCP configuration below only when shell execution is unavailable.
 
 The proxy speaks standard MCP over HTTP (daemon mode) or stdio. Configure your agent
 to connect to it like any other MCP server.
@@ -209,25 +214,38 @@ gateway.get_result(ref: "r3", search: "error")
 
 ---
 
-## The Standard Workflow
+## The Standard Workflow (CLI First)
 
-```
-1. SEARCH ────────────────────────
-   gateway.search({ query: "cypher query" })
+```text
+1. SEARCH
+   goldeneye-mcp-proxy search "cypher query" --limit 3
    → "id": "neo4j-cypher::execute_query"
 
-2. DESCRIBE (skip if you know params)
-   gateway.describe({ id: "neo4j-cypher::execute_query" })
+2. DESCRIBE before first use or uncertain schema
+   goldeneye-mcp-proxy describe 'neo4j-cypher::execute_query'
    → { inputSchema: { query: "string", params: "object" } }
 
-3. INVOKE ────────────────────────
-   gateway.invoke({ id: "neo4j-cypher::execute_query", args: { query: "..." } })
+3. INVOKE
+   goldeneye-mcp-proxy invoke 'neo4j-cypher::execute_query' --args '{"query":"MATCH (n) RETURN n LIMIT 10"}'
    → { content: [...], metadata: { ref: "r3" } }
 
-4. PAGINATE (if _ref present)
-   gateway.get_result({ ref: "r3", offset: 50, limit: 50 })
-   → next 50 items
+4. RETRIEVE only what is needed when `_ref` is present
+   goldeneye-mcp-proxy get-result 'r3' --offset 50 --limit 50 --fields id,name
 ```
+
+For long work, use `invoke-async`, capture its `jobId`, then poll with
+`invoke-status <job-id>` until completed or failed. For arguments containing secrets,
+generate JSON and pipe it to `--args -`; never place secret-bearing JSON in argv.
+All commands accept `--url`; otherwise `MCP_GATEWAY_URL`, then
+`http://127.0.0.1:8767/mcp`, applies.
+
+Stable exits: `0` success, `2` input, `3` daemon unavailable, `4` gateway, `5`
+internal/transport. Parse compact JSON from stdout; errors use stderr.
+
+### MCP Fallback
+
+When shell execution is unavailable, call the six `gateway.*` MCP tools documented
+above with the same search → describe → invoke/poll → selective retrieval sequence.
 
 ---
 
@@ -274,10 +292,10 @@ server within the idle window are fast.
 
 **If the examples above don't work for your agent:**
 
-1. **Search first** — Use `gateway.search` to discover the actual tool IDs and names.
+1. **Search first** — Use CLI `search` (or MCP `gateway.search`) to discover the actual tool IDs and names.
    Tool names may differ between MCP server versions.
 
-2. **Describe for schema** — Always use `gateway.describe` to get the exact parameter
+2. **Describe for schema** — Always use CLI `describe` (or MCP `gateway.describe`) to get the exact parameter
    schema. Don't assume parameter names from memory.
 
 3. **Try alternative formats** — Some agent frameworks wrap MCP calls differently:

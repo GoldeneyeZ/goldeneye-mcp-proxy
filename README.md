@@ -114,6 +114,41 @@ Catalog snapshots are stored in `~/.cache/goldeneye-mcp-proxy/catalogs/`.
 
 ---
 
+## Compact Agent CLI
+
+Agents can call the daemon without loading MCP gateway schemas. Commands emit one
+compact JSON value and auto-start the daemon only after a connection failure.
+
+```bash
+goldeneye-mcp-proxy search "cypher query" --limit 3
+goldeneye-mcp-proxy describe 'neo4j-cypher::execute_query'
+goldeneye-mcp-proxy invoke 'neo4j-cypher::execute_query' --args '{"query":"MATCH (n) RETURN n LIMIT 10"}'
+goldeneye-mcp-proxy invoke-async 'server::long_task' --args '{}'
+goldeneye-mcp-proxy invoke-status 'job_xxx'
+goldeneye-mcp-proxy get-result 'r3' --offset 0 --limit 50 --fields id,name
+```
+
+Use `--args -` and pipe JSON on stdin whenever arguments contain secrets; never put
+secret-bearing JSON in the command line. All commands accept `--url <endpoint>`.
+Otherwise the endpoint resolves from `MCP_GATEWAY_URL`, then defaults to
+`http://127.0.0.1:8767/mcp`.
+
+| Command | Purpose |
+|---------|---------|
+| `search <query> [--server <key>] [--limit <n>]` | Find exact tool IDs |
+| `describe <tool-id>` | Load one tool's schema before invoking |
+| `invoke <tool-id> --args <json\|-> [--timeout <ms>]` | Run bounded work |
+| `invoke-async <tool-id> --args <json\|->` | Queue long work |
+| `invoke-status <job-id>` | Poll an async job |
+| `get-result <ref> [--offset <n>] [--limit <n>] [--fields <a,b>] [--search <text>]` | Retrieve only needed `_ref` data |
+
+Exit codes are `0` success, `2` invalid input, `3` daemon unavailable, `4` gateway
+failure, and `5` internal/transport failure. Errors are compact JSON on stderr.
+
+The npm package also bundles the `using-goldeneye-cli` agent skill under `skills/`.
+
+---
+
 ## MCP Tool Gateway Tools
 
 | Tool | Purpose | Token Cost |
@@ -187,18 +222,20 @@ goldeneye-mcp-proxy --restore-agents-skills
 ## Model Workflow
 
 ```
-1. gateway.search { query: "cypher query", limit: 5 }
+1. goldeneye-mcp-proxy search "cypher query" --limit 5
    → Returns: [ { id: "neo4j-cypher::run_cypher_query", score: 4.2 }, ... ]
 
-2. gateway.describe { id: "neo4j-cypher::run_cypher_query" }
+2. goldeneye-mcp-proxy describe 'neo4j-cypher::run_cypher_query'
    → Returns: { inputSchema: { query: "string", params: "object" } }
 
-3. gateway.invoke { id: "neo4j-cypher::run_cypher_query", args: { query: "MATCH (n) RETURN n LIMIT 10" } }
+3. goldeneye-mcp-proxy invoke 'neo4j-cypher::run_cypher_query' --args '{"query":"MATCH (n) RETURN n LIMIT 10"}'
    → Returns: { content: [...], _ref: "r3", _truncated: true }
 
-4. gateway.get_result { ref: "r3", offset: 50, limit: 50, fields: ["name", "id"] }
+4. goldeneye-mcp-proxy get-result 'r3' --offset 50 --limit 50 --fields name,id
    → Returns: next page of results with field projection
 ```
+
+If only MCP tool calls are available, use the equivalent six `gateway.*` tools.
 
 ---
 
@@ -763,6 +800,9 @@ spawning a single process. They're refreshed each time a server reconnects.
 | `--daemon` | HTTP daemon mode — config-driven lazy loading |
 | `--port <N>` | HTTP daemon on custom port |
 | `--discover` | Force-connect ALL servers, build snapshots, exit |
+| `search`, `describe`, `invoke` | Compact synchronous gateway workflow |
+| `invoke-async`, `invoke-status` | Queue and poll long-running work |
+| `get-result` | Retrieve selected data from shielded responses |
 
 ---
 
