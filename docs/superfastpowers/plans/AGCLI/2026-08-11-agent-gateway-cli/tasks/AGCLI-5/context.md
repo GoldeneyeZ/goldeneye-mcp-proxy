@@ -4,6 +4,7 @@
 **Task:** `AGCLI-5`
 **Commit SHA:** `fb8d1424f84b1ec3789d2dd3657fe19d6ff21c8e`
 **Repair Commit SHA:** `b4e7dfb863938117a55719f5902a877d9a445aaf`
+**Truncation Docs Repair Commit SHA:** `5319b69`
 
 ## Starting Context
 
@@ -78,3 +79,31 @@ Files above are starting points only. Inspect any additional files needed to com
 - `quick_validate.py skills/using-goldeneye-cli`: `Skill is valid!`.
 - Agent-facing docs contain no `metadata.ref`; invocation example uses top-level `_ref` and `_truncated`.
 - `git diff --check`: PASS.
+
+## Spec-Review Rerun 4 Repair: Truncation Reference Location
+
+### Files Changed
+
+- `AGENT-CONTEXT.md`: states that shielding adds top-level `_ref`, `_truncated`, and `_note`; limits `metadata` to request, tool, and timing details.
+- `tests/cli-package.test.ts`: checks README, agent context, and bundled skill for stale metadata-ref claims and requires top-level-field guidance.
+
+### TDD Evidence
+
+- RED: focused doc-contract test failed with `AGENT-CONTEXT.md claims ref lives in metadata` against the stale `metadata will include: ref` wording.
+- GREEN: focused doc-contract test passed after correcting the field location.
+
+### Verification
+
+- `node --loader ts-node/esm --test tests/cli-package.test.ts` — PASS, 3/3.
+- `npm run build` — PASS.
+- `npm test` — PASS, 114/114.
+- `quick_validate.py skills/using-goldeneye-cli` — `Skill is valid!`; skill remains 374 words.
+- Clean `npm pack --dry-run --json` inspection — PASS, 137 files; built entrypoint, 21 CLI modules, skill, and skill metadata present.
+- Agent-facing Markdown/YAML scan outside historical plan artifacts — no metadata-ref claim; README and skill retain top-level `_ref` examples.
+- `git diff --check -- AGENT-CONTEXT.md tests/cli-package.test.ts` — PASS.
+
+### Notes
+
+- Repair commit: `5319b69` (`docs(cli): fix truncation reference location`).
+- No skill content changed; packaged skill validation and selective top-level `_ref` guidance remain accurate.
+- No task-scoped review run under bypass policy.
