@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-08-11 12:08
+Last updated: 2026-08-11 12:12
 
 ## Execution Policy
 
@@ -18,7 +18,7 @@ Last updated: 2026-08-11 12:08
 - Spec review: unchecked
 - Code quality: unchecked
 - Integration review: unchecked
-- Next action: Implement AGCLI-2.
+- Next action: Implement AGCLI-3.
 
 ## Task 1: Parse Commands and Stabilize Output
 
@@ -29,8 +29,8 @@ Last updated: 2026-08-11 12:08
 ## Task 2: Parse JSON and Call Gateway JSON-RPC
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-2/`
-- Status: pending
-- Next action: Wait for AGCLI-1.
+- Status: implemented
+- Next action: Await plan-scoped reviews after all tasks are implemented.
 
 ## Task 3: Recover Daemon and Run Commands
 
