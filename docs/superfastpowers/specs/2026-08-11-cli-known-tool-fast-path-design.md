@@ -2,19 +2,19 @@
 
 ## Goal
 
-Let agents use direct MCP for known tools, avoiding CLI and discovery overhead without weakening schema safety.
+Let agents use Goldeneye MCP gateway tools directly, avoiding redundant discovery and response tokens without any command-line workflow.
 
 ## Behavior
 
-Add an explicit fast-path rule before the skill's CLI workflow. Bypass the CLI and use the direct MCP tool when either condition holds:
+Use `gateway.invoke` or `gateway.invoke_async` immediately when either condition holds:
 
 - the agent knows the exact tool ID and current argument schema; or
 - the same tool was invoked successfully during the current session.
 
-Invoke through MCP using the known arguments. If the ID, schema, or freshness is uncertain—or invocation reports a schema/input mismatch—return to CLI `describe` before retrying. Run CLI `search` only when the exact tool ID is unknown. Use the normal CLI workflow when direct MCP access is unavailable.
+If the ID is unknown, run `gateway.search`. If the schema is unknown, uncertain, or rejected, run `gateway.describe`. Never rediscover a known current tool.
 
-Async polling, `_ref` slicing, endpoint selection, compact JSON parsing, exit-code handling, and secret-safe stdin guidance remain unchanged.
+Poll async jobs through `gateway.invoke_status`. Retrieve only needed portions of top-level `_ref` results through `gateway.get_result`.
 
 ## Scope
 
-Rename the skill to `skills/using-goldeneye-mcp/`, including frontmatter and agent metadata. Update active README/package tests and replace the discovery symlink under `/home/goldeneye/.agents/skills/`. Validate frontmatter/structure, package inclusion, exact fast-path wording, and existing fallback guidance.
+Keep the skill at `skills/using-goldeneye-mcp/`. Update agent metadata and package tests. Validate frontmatter, package inclusion, exact fast-path behavior, all six gateway MCP tools, and absence of command-line guidance.

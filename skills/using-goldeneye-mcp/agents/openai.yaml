@@ -1,4 +1,4 @@
 interface:
   display_name: "Using Goldeneye MCP"
-  short_description: "Call known MCP tools directly; discover via compact CLI"
-  default_prompt: "Use $using-goldeneye-mcp to call a known MCP tool directly or discover one through the compact CLI."
+  short_description: "Discover and invoke tools through Goldeneye MCP"
+  default_prompt: "Use $using-goldeneye-mcp to discover or invoke a tool through the Goldeneye MCP gateway."

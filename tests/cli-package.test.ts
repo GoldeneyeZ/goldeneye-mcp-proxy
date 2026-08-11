@@ -125,10 +125,14 @@ test("agent-facing docs identify truncation references as top-level fields", () 
   assert.match(agentContext, /top-level `_ref`, `_truncated`, and `_note`/);
 
   const skill = docs[2][1];
-  assert.match(skill, /Use direct MCP instead of this CLI/);
+  assert.match(skill, /Use `gateway\.invoke` directly/);
   assert.match(skill, /exact tool ID and current argument schema are known/);
   assert.match(skill, /invoked successfully during the current session/);
-  assert.match(skill, /Run `search` only when the exact tool ID is unknown/);
+  assert.match(skill, /Run `gateway\.search` only when the exact tool ID is unknown/);
+  for (const tool of ["gateway.search", "gateway.describe", "gateway.invoke", "gateway.invoke_async", "gateway.invoke_status", "gateway.get_result"]) {
+    assert.match(skill, new RegExp(tool.replace(".", "\\.")), `skill omits ${tool}`);
+  }
+  assert.doesNotMatch(skill, /\bCLI\b|--args|goldeneye-mcp-proxy\s+(?:search|describe|invoke)/i);
 });
 
 test("clean npm package builds and includes the CLI and agent skill", async () => {

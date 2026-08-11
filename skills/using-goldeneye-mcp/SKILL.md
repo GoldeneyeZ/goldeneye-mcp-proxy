@@ -1,65 +1,64 @@
 ---
 name: using-goldeneye-mcp
-description: Use when an agent needs to discover, inspect, invoke, poll, or paginate MCP gateway tools while minimizing schema and response tokens.
+description: Use when an agent needs to discover, inspect, invoke, poll, or paginate tools through the Goldeneye MCP gateway while minimizing schema and response tokens.
 ---
 
 # Using Goldeneye MCP
 
 ## Overview
 
-Use direct MCP for known tools. Use the `goldeneye-mcp-proxy` 1.x CLI as the compact fallback for discovery or shell-only access.
+Use Goldeneye's MCP gateway tools directly. Load only the schema and result data needed for the task.
 
-## Direct MCP Fast Path
+## Known-Tool Fast Path
 
-Use direct MCP instead of this CLI when direct MCP access is available and either:
+Use `gateway.invoke` directly when either:
 
 - the exact tool ID and current argument schema are known; or
 - the tool was invoked successfully during the current session.
 
-If tool identity, schema, or freshness is uncertain, use the CLI workflow below. After a direct MCP schema/input mismatch, run `describe` before retrying. Run `search` only when the exact tool ID is unknown.
+Use `gateway.invoke_async` instead for known long-running work. Skip `gateway.search` and `gateway.describe` in both cases. After a schema/input mismatch, call `gateway.describe` before retrying.
 
-## Required CLI Workflow
+## Workflow
 
-1. Run `search` with a natural-language capability only when the exact tool ID is unknown. Select an exact returned tool ID.
-2. Run `describe` before the first invocation when its schema is unknown or uncertain. Never infer argument names.
-3. Choose `invoke` for bounded work or `invoke-async` for long-running work.
-4. Poll an async `jobId` with `invoke-status` until `completed` or `failed`.
-5. When any result contains `_ref`, call `get-result` only for the needed offset, limit, fields, or search. Do not fetch the full payload by default.
+1. Run `gateway.search` only when the exact tool ID is unknown. Select an exact returned ID.
+2. Run `gateway.describe` only when the argument schema is unknown, uncertain, or rejected.
+3. Run `gateway.invoke` for bounded work or `gateway.invoke_async` for long-running work.
+4. Poll the returned `jobId` with `gateway.invoke_status` until `completed` or `failed`.
+5. When a response contains top-level `_ref`, use `gateway.get_result` to retrieve only needed offsets, fields, or matches.
 
-Every command prints exactly one compact JSON value. Parse that JSON directly. Use `--url` when targeting a non-default endpoint; otherwise `MCP_GATEWAY_URL`, then `http://127.0.0.1:8767/mcp`, applies.
+Treat returned IDs and schemas as authoritative. Pass upstream arguments inside `args`; never invent wrapper or argument names.
 
-## Quick Reference
+## Tool Map
 
-| Need | Command |
-|---|---|
-| Find tools | `goldeneye-mcp-proxy search <query> [--server <key>] [--limit <n>]` |
-| Read schema | `goldeneye-mcp-proxy describe <tool-id>` |
-| Run now | `goldeneye-mcp-proxy invoke <tool-id> --args <json|-> [--timeout <ms>]` |
-| Queue work | `goldeneye-mcp-proxy invoke-async <tool-id> --args <json|->` |
-| Poll job | `goldeneye-mcp-proxy invoke-status <job-id>` |
-| Slice result | `goldeneye-mcp-proxy get-result <ref> [--offset <n>] [--limit <n>] [--fields <a,b>] [--search <text>]` |
-
-Exit codes: `0` success; `2` input; `3` daemon unavailable; `4` gateway; `5` internal/transport. Errors are compact JSON on stderr and never echo supplied argument JSON.
+| Need | MCP tool | Key input |
+|---|---|---|
+| Find exact tool ID | `gateway.search` | `query`, optional `server`, `limit` |
+| Read one schema | `gateway.describe` | `id` |
+| Run bounded work | `gateway.invoke` | `id`, `args`, optional `timeoutMs` |
+| Queue long work | `gateway.invoke_async` | `id`, `args`, optional `priority` |
+| Poll queued work | `gateway.invoke_status` | `jobId` |
+| Slice shielded result | `gateway.get_result` | `ref`, optional `offset`, `limit`, `fields`, `search` |
 
 ## Example
 
-```bash
-goldeneye-mcp-proxy search "database query" --limit 3
-goldeneye-mcp-proxy describe 'database::query'
+Known tool and schema—invoke immediately:
 
-read -rsp 'Database password: ' DB_PASSWORD; printf '\n'; export DB_PASSWORD
-job_json=$(node -e 'process.stdout.write(JSON.stringify({query:"SELECT id,name FROM users",password:process.env.DB_PASSWORD}))' \
-  | goldeneye-mcp-proxy invoke-async 'database::query' --args -)
-unset DB_PASSWORD
-job_id=$(printf '%s' "$job_json" | jq -r '.jobId')
-goldeneye-mcp-proxy invoke-status "$job_id"
-goldeneye-mcp-proxy get-result '<returned-_ref>' --offset 0 --limit 50 --fields id,name
+```text
+gateway.invoke
+{"id":"database::query","args":{"query":"SELECT id,name FROM users"}}
+```
+
+Unknown tool—discover only what is missing:
+
+```text
+gateway.search  {"query":"database query","limit":3}
+gateway.describe {"id":"database::query"}
+gateway.invoke  {"id":"database::query","args":{"query":"SELECT id,name FROM users"}}
 ```
 
 ## Common Mistakes
 
-- Using CLI discovery when direct MCP is available and the exact tool ID/current schema are known.
-- Calling `gateway.search` as a CLI subcommand: use `search`.
-- Guessing schemas or wrapper names such as `tool_id`/`arguments`: use `describe`, then pass only upstream args to `--args`.
-- Putting secrets in inline JSON: pipe generated JSON to `--args -`.
-- Polling with anything except the returned `jobId`, or downloading all `_ref` data.
+- Searching or describing a known, successfully used tool again.
+- Guessing IDs, schemas, wrapper names, or upstream argument names.
+- Polling with anything except the returned `jobId`.
+- Fetching an entire `_ref` result when a slice or search is sufficient.

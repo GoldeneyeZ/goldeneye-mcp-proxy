@@ -2,16 +2,16 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superfastpowers:goal-driven-development with `goal-driven-bypass` (recommended), `goal-driven-gated`, superfastpowers:subagent-driven-development, or superfastpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Teach agents to bypass the CLI and use direct MCP when a tool ID and current schema are already known.
+**Goal:** Teach agents to use Goldeneye MCP gateway tools directly, with no command-line workflow.
 
-**Architecture:** Rename the skill to `using-goldeneye-mcp` and add one precedence rule. Preserve CLI discovery as fallback when direct MCP is unavailable or tool identity/schema is uncertain.
+**Architecture:** Keep the renamed `using-goldeneye-mcp` skill MCP-only. Use `gateway.invoke` directly for known tools; use `gateway.search` and `gateway.describe` only for missing identity or schema knowledge.
 **Plan Acronym:** GTF
 
 **Tech Stack:** Markdown skill, Python skill validator, Node test suite
 
 ---
 
-### Task 1: Rename Skill and Add Direct-MCP Fast Path
+### Task 1: Rename Skill and Add MCP-Only Fast Path
 
 <TASK-ID>GTF-1</TASK-ID>
 
@@ -31,30 +31,31 @@ Expected: FAIL—the agent either prescribes redundant CLI discovery or chooses 
 
 - [x] **Step 2: Write minimal skill rule**
 
-Rename the directory and frontmatter to `using-goldeneye-mcp`. Insert before `## Required Workflow`:
+Rename the directory and frontmatter to `using-goldeneye-mcp`. Add this precedence rule:
 
 ```markdown
-## Direct MCP Fast Path
+## Known-Tool Fast Path
 
-Use direct MCP instead of this CLI when direct MCP access is available and either:
+Use `gateway.invoke` directly when either:
 
 - the exact tool ID and current argument schema are known; or
 - the tool was invoked successfully during the current session.
 
-If tool identity, schema, or freshness is uncertain, use the CLI workflow below. After a direct MCP schema/input mismatch, run `describe` before retrying. Run `search` only when the exact tool ID is unknown.
+After a schema/input mismatch, call `gateway.describe` before retrying. Run `gateway.search` only when the exact tool ID is unknown.
 ```
 
-Change the overview's unconditional `search, describe, then invoke` sentence to identify that sequence as the fallback workflow.
+Document only the six Goldeneye MCP gateway tools; include no command-line or shell workflow.
 
 - [x] **Step 3: Add regression assertions**
 
 Update package paths to `skills/using-goldeneye-mcp/`. Extend the existing package documentation test with exact semantic assertions:
 
 ```typescript
-assert.match(skill, /Use direct MCP instead of this CLI/);
+assert.match(skill, /Use `gateway\.invoke` directly/);
 assert.match(skill, /exact tool ID and current argument schema are known/);
 assert.match(skill, /invoked successfully during the current session/);
-assert.match(skill, /Run `search` only when the exact tool ID is unknown/);
+assert.match(skill, /Run `gateway\.search` only when the exact tool ID is unknown/);
+assert.doesNotMatch(skill, /\bCLI\b|--args|goldeneye-mcp-proxy\s+(?:search|describe|invoke)/i);
 ```
 
 - [x] **Step 4: Verify GREEN**
@@ -72,7 +73,7 @@ Expected: matching tests pass; validator prints `Skill is valid!`.
 
 Repeat Step 1 using the revised skill.
 
-Expected: PASS—the agent selects direct MCP without CLI `search`/`describe`; it preserves CLI fallback for uncertainty or schema mismatch.
+Expected: PASS—the agent selects `gateway.invoke` without redundant discovery and uses only Goldeneye MCP gateway tools for uncertain cases.
 
 - [x] **Step 6: Verify and commit**
 
@@ -96,3 +97,4 @@ git commit -m "docs(skill): prefer direct MCP for known tools"
 - GREEN: focused documentation test passed 1/1; official skill validator passed.
 - Forward test: fresh agent selected direct MCP with no search/describe and cited the new fast-path rule.
 - Full verification: tests 120/120; build passed; dry package contained both renamed skill files and no old skill path.
+- MCP-only correction: RED assertion exposed command-line guidance; GREEN focused test passed; fresh agent used only `gateway.*` calls for known and unknown tool cases.
