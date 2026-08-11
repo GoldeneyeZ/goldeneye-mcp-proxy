@@ -11,6 +11,7 @@ import { createJsonServer } from "./helpers/cli-http-server.ts";
 
 const execFile = promisify(execFileCallback);
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
+const systemdService = "goldeneye-mcp-proxy.service";
 const sourceFiles = [
   "package.json",
   "tsconfig.json",
@@ -20,6 +21,7 @@ const sourceFiles = [
   "AGENT-CONTEXT.md",
   "skills",
   "config.example.json",
+  systemdService,
   "LICENSE",
 ];
 const cliModules = readdirSync(join(repositoryRoot, "src", "cli"))
@@ -55,7 +57,18 @@ function assertRequiredFiles(report: PackReport): void {
   }
   assert.ok(files.includes("skills/using-goldeneye-cli/SKILL.md"));
   assert.ok(files.includes("skills/using-goldeneye-cli/agents/openai.yaml"));
+  assert.ok(files.includes(systemdService), `missing ${systemdService}`);
 }
+
+test("runtime, documentation, and package use the canonical systemd unit", () => {
+  const daemonStartup = readFileSync(join(repositoryRoot, "src", "cli", "daemon-startup.ts"), "utf8");
+  const readme = readFileSync(join(repositoryRoot, "README.md"), "utf8");
+
+  assert.match(daemonStartup, new RegExp(`SYSTEMD_SERVICE = ["']${systemdService}["']`));
+  assert.match(readme, new RegExp(`cp .*${systemdService}`));
+  assert.match(readme, new RegExp(`${systemdService}.*Systemd user service unit`));
+  assert.doesNotMatch(readme, /goldeneye\.service/);
+});
 
 test("agent-facing docs identify truncation references as top-level fields", () => {
   const paths = ["AGENT-CONTEXT.md", "README.md", "skills/using-goldeneye-cli/SKILL.md"];
@@ -113,6 +126,10 @@ test("packed executable provides help and dispatches search", async () => {
     mkdirSync(extracted);
     await execFile("tar", ["-xzf", join(fixture, basename(report.filename)), "-C", extracted, "--strip-components=1"]);
     symlinkSync(join(repositoryRoot, "node_modules"), join(extracted, "node_modules"), "dir");
+    assert.equal(
+      readFileSync(join(extracted, systemdService), "utf8"),
+      readFileSync(join(repositoryRoot, systemdService), "utf8"),
+    );
 
     const executable = join(extracted, "dist", "index.js");
     const { stdout: help, stderr: helpError } = await execFile(process.execPath, [executable, "--help"]);
