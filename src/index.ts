@@ -30,12 +30,49 @@ import { HttpMcpServer } from "./transports/http/HttpMcpServer.js";
 import { SkillMigrationService } from "./skills/SkillMigrationService.js";
 import { isGatewayCliCommand } from "./cli/parse-cli.js";
 import { runCli } from "./cli/run-cli.js";
+import { writeFailure } from "./cli/output.js";
+import { CliError } from "./cli/types.js";
+
+const LEGACY_OPTIONS = new Set([
+  "--daemon",
+  "--discover",
+  "--defer-codex-skills",
+  "--restore-codex-skills",
+  "--defer-agents-skills",
+  "--restore-agents-skills",
+  "--dry-run",
+  "--help",
+]);
 
 const args = process.argv.slice(2);
 if (isGatewayCliCommand(args[0])) {
   process.exitCode = await runCli(args);
 } else {
-  runLegacyMode(args);
+  const validationError = validateLegacyArgs(args);
+  if (validationError) {
+    const cliError = writeFailure(validationError, value => process.stderr.write(value));
+    process.exitCode = cliError.exitCode;
+  } else {
+    runLegacyMode(args);
+  }
+}
+
+function validateLegacyArgs(legacyArgs: string[]): CliError | undefined {
+  for (let index = 0; index < legacyArgs.length; index++) {
+    const argument = legacyArgs[index];
+    if (argument === "--port") {
+      const value = legacyArgs[++index];
+      if (value === undefined || value.length === 0 || value.startsWith("--")) {
+        return new CliError("INVALID_ARGS", "Missing value for --port", 2);
+      }
+      if (!/^\d+$/.test(value) || Number(value) < 1 || Number(value) > 65_535) {
+        return new CliError("INVALID_ARGS", "Invalid value for --port", 2);
+      }
+    } else if (argument.startsWith("--") && !LEGACY_OPTIONS.has(argument)) {
+      return new CliError("INVALID_ARGS", "Unknown legacy option", 2);
+    }
+  }
+  return undefined;
 }
 
 function runLegacyMode(legacyArgs: string[]): void {

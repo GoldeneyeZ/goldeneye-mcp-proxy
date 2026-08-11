@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { createJsonServer } from "./helpers/cli-http-server.ts";
 
 const entrypoint = fileURLToPath(new URL("../dist/index.js", import.meta.url));
+const processDeadlineMs = 10_000;
 
 interface ExecResult {
   code: number;
@@ -25,7 +26,7 @@ interface LegacyFixture {
 
 function runEntrypoint(args: string[], env: NodeJS.ProcessEnv = process.env): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    execFile(process.execPath, [entrypoint, ...args], { encoding: "utf8", env, timeout: 4_000 }, (error, stdout, stderr) => {
+    execFile(process.execPath, [entrypoint, ...args], { encoding: "utf8", env, timeout: processDeadlineMs }, (error, stdout, stderr) => {
       if (error && error.code === undefined) {
         reject(error);
         return;
@@ -72,7 +73,7 @@ function observeRunningEntrypoint(
     const deadline = setTimeout(() => {
       child.kill("SIGKILL");
       reject(new Error(`Entrypoint observation timed out. stdout=${JSON.stringify(stdout)} stderr=${JSON.stringify(stderr)}`));
-    }, 4_000);
+    }, processDeadlineMs);
 
     const check = () => {
       if (observed || !isObserved(stdout, stderr)) return;
@@ -165,6 +166,26 @@ test("built entrypoint reports invalid gateway CLI input on stderr", async () =>
     stdout: "",
     stderr: '{"error":{"code":"INVALID_ARGS","message":"Missing positional argument for search"}}\n',
   });
+});
+
+test("built entrypoint rejects unknown and malformed legacy options before stdio startup", async () => {
+  const cases = [
+    { args: ["--wat"], message: "Unknown legacy option" },
+    { args: ["--port"], message: "Missing value for --port" },
+    { args: ["--port", "not-a-port"], message: "Invalid value for --port" },
+    { args: ["--port", "0"], message: "Invalid value for --port" },
+    { args: ["--port", "65536"], message: "Invalid value for --port" },
+  ];
+
+  for (const testCase of cases) {
+    const result = await runEntrypoint(testCase.args);
+    assert.deepEqual(result, {
+      code: 2,
+      stdout: "",
+      stderr: `${JSON.stringify({ error: { code: "INVALID_ARGS", message: testCase.message } })}\n`,
+    }, testCase.args.join(" "));
+    assert.doesNotMatch(result.stderr, /__MCP_GATEWAY_STDIO_READY__|starting \(stdio\)|\[proxy\]/);
+  }
 });
 
 test("built entrypoint does not echo supplied JSON in parser errors", async () => {
