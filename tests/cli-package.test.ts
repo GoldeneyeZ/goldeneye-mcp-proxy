@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile as execFileCallback } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -56,6 +56,27 @@ function assertRequiredFiles(report: PackReport): void {
   assert.ok(files.includes("skills/using-goldeneye-cli/SKILL.md"));
   assert.ok(files.includes("skills/using-goldeneye-cli/agents/openai.yaml"));
 }
+
+test("agent-facing docs identify truncation references as top-level fields", () => {
+  const paths = ["AGENT-CONTEXT.md", "README.md", "skills/using-goldeneye-cli/SKILL.md"];
+  const docs = paths.map(path => [path, readFileSync(join(repositoryRoot, path), "utf8")] as const);
+  const metadataRefClaims = [
+    /metadata\._?ref/i,
+    /metadata\[['"`]_?ref['"`]\]/i,
+    /`metadata` will include:\s*(?:\r?\n)?\s*-\s*`_?ref`/i,
+    /\bmetadata\s+(?:includes?|contains?)\s+(?:an?\s+)?(?:truncation\s+)?(?:reference|`?_?ref`?)/i,
+  ];
+
+  for (const [path, content] of docs) {
+    assert.match(content, /_ref/, `${path} omits the truncation reference field`);
+    for (const claim of metadataRefClaims) {
+      assert.doesNotMatch(content, claim, `${path} claims ref lives in metadata`);
+    }
+  }
+
+  const agentContext = docs[0][1];
+  assert.match(agentContext, /top-level `_ref`, `_truncated`, and `_note`/);
+});
 
 test("clean npm package builds and includes the CLI and agent skill", async () => {
   const fixture = createCleanPackageFixture();

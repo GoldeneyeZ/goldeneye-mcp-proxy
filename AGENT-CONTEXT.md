@@ -155,9 +155,9 @@ gateway.invoke(id: string, args: object, timeoutMs?: number)
 }
 ```
 
-**If the result was truncated** (large responses), `metadata` will include:
-- `ref` — use this with `get_result` to paginate
-- The response body will include `_ref`, `_truncated: true`, and `_note`
+`metadata` contains request, tool, and timing details only. **If the result was
+truncated**, response shielding adds top-level `_ref`, `_truncated`, and `_note`
+fields. Pass `_ref` to `get_result` to paginate.
 
 **Example — simple call:**
 ```
