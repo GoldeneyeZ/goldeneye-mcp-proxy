@@ -1,6 +1,6 @@
 # Plan Progression
 
-Last updated: 2026-08-11 13:18
+Last updated: 2026-08-11 13:33
 
 ## Execution Policy
 
@@ -24,7 +24,7 @@ Last updated: 2026-08-11 13:18
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-1/`
 - Status: implemented
-- Next action: Await plan-scoped re-review after AGCLI-4 repair.
+- Next action: Await plan-scoped re-review.
 
 ## Task 2: Parse JSON and Call Gateway JSON-RPC
 
@@ -36,7 +36,7 @@ Last updated: 2026-08-11 13:18
 
 - Path: `docs/superfastpowers/plans/AGCLI/2026-08-11-agent-gateway-cli/tasks/AGCLI-3/`
 - Status: implemented
-- Next action: Await plan-scoped reviews after all tasks are implemented.
+- Next action: Await plan-scoped re-review.
 
 ## Task 4: Integrate Executable and Preserve Legacy Modes
 
