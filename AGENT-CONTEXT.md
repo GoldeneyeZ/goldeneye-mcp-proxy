@@ -227,7 +227,7 @@ gateway.get_result(ref: "r3", search: "error")
 
 3. INVOKE
    goldeneye-mcp-proxy invoke 'neo4j-cypher::execute_query' --args '{"query":"MATCH (n) RETURN n LIMIT 10"}'
-   → { content: [...], metadata: { ref: "r3" } }
+   → { content: [...], _ref: "r3", _truncated: true }
 
 4. RETRIEVE only what is needed when `_ref` is present
    goldeneye-mcp-proxy get-result 'r3' --offset 50 --limit 50 --fields id,name
