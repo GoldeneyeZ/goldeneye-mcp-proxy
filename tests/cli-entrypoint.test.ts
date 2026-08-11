@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 // @ts-expect-error Native Node TypeScript execution requires the source extension.
 import { createJsonServer } from "./helpers/cli-http-server.ts";
@@ -13,9 +17,15 @@ interface ExecResult {
   stderr: string;
 }
 
-function runEntrypoint(args: string[]): Promise<ExecResult> {
+interface LegacyFixture {
+  configPath: string;
+  env: NodeJS.ProcessEnv;
+  home: string;
+}
+
+function runEntrypoint(args: string[], env: NodeJS.ProcessEnv = process.env): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    execFile(process.execPath, [entrypoint, ...args], { encoding: "utf8", timeout: 2_000 }, (error, stdout, stderr) => {
+    execFile(process.execPath, [entrypoint, ...args], { encoding: "utf8", env, timeout: 4_000 }, (error, stdout, stderr) => {
       if (error && error.code === undefined) {
         reject(error);
         return;
@@ -25,6 +35,92 @@ function runEntrypoint(args: string[]): Promise<ExecResult> {
         stdout,
         stderr,
       });
+    });
+  });
+}
+
+function createLegacyFixture(): LegacyFixture {
+  const home = mkdtempSync(join(tmpdir(), "goldeneye-cli-legacy-"));
+  const configPath = join(home, "config.json");
+  writeFileSync(configPath, "{}\n", "utf8");
+  return {
+    configPath,
+    env: { ...process.env, HOME: home, MCP_GATEWAY_CONFIG: configPath },
+    home,
+  };
+}
+
+function removeLegacyFixture(fixture: LegacyFixture): void {
+  rmSync(fixture.home, { recursive: true, force: true });
+}
+
+function observeRunningEntrypoint(
+  args: string[],
+  env: NodeJS.ProcessEnv,
+  isObserved: (stdout: string, stderr: string) => boolean,
+): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [entrypoint, ...args], {
+      env,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    let observed = false;
+    let forceKill: NodeJS.Timeout | undefined;
+
+    const deadline = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error(`Entrypoint observation timed out. stdout=${JSON.stringify(stdout)} stderr=${JSON.stringify(stderr)}`));
+    }, 4_000);
+
+    const check = () => {
+      if (observed || !isObserved(stdout, stderr)) return;
+      observed = true;
+      clearTimeout(deadline);
+      child.kill("SIGTERM");
+      forceKill = setTimeout(() => child.kill("SIGKILL"), 500);
+    };
+
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", chunk => {
+      stdout += chunk;
+      check();
+    });
+    child.stderr.on("data", chunk => {
+      stderr += chunk;
+      check();
+    });
+    child.once("error", error => {
+      clearTimeout(deadline);
+      if (forceKill) clearTimeout(forceKill);
+      reject(error);
+    });
+    child.once("close", (code, signal) => {
+      clearTimeout(deadline);
+      if (forceKill) clearTimeout(forceKill);
+      if (!observed) {
+        reject(new Error(`Entrypoint exited before observation (${code ?? signal}). stdout=${JSON.stringify(stdout)} stderr=${JSON.stringify(stderr)}`));
+        return;
+      }
+      resolve({ stdout, stderr });
+    });
+  });
+}
+
+function getAvailablePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        server.close();
+        reject(new Error("Test port server has no TCP address"));
+        return;
+      }
+      server.close(error => error ? reject(error) : resolve(address.port));
     });
   });
 }
@@ -87,5 +183,79 @@ test("built entrypoint help retains legacy modes and lists all gateway commands"
     "search", "describe", "invoke", "invoke-async", "invoke-status", "get-result",
   ]) {
     assert.match(result.stdout, new RegExp(`goldeneye-mcp-proxy ${command}(?: |\\n)`));
+  }
+});
+
+test("built entrypoint keeps no-argument and config-path stdio dispatch reachable", async () => {
+  const fixture = createLegacyFixture();
+  try {
+    const noArgument = await observeRunningEntrypoint([], fixture.env, (stdout, stderr) =>
+      stdout.includes("__MCP_GATEWAY_STDIO_READY__") && stderr.includes("starting (stdio)"),
+    );
+    assert.match(noArgument.stderr, new RegExp(`Loaded 0 server\\(s\\) from ${fixture.configPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
+
+    const explicitConfigPath = join(fixture.home, "explicit-config.json");
+    writeFileSync(explicitConfigPath, "{}\n", "utf8");
+    const explicitConfig = await observeRunningEntrypoint([explicitConfigPath], fixture.env, (stdout, stderr) =>
+      stdout.includes("__MCP_GATEWAY_STDIO_READY__") && stderr.includes("starting (stdio)"),
+    );
+    assert.match(explicitConfig.stderr, new RegExp(`Loaded 0 server\\(s\\) from ${explicitConfigPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
+  } finally {
+    removeLegacyFixture(fixture);
+  }
+});
+
+test("built entrypoint keeps --daemon and --port HTTP dispatch reachable", async () => {
+  const fixture = createLegacyFixture();
+  try {
+    const daemon = await observeRunningEntrypoint(["--daemon", fixture.configPath], fixture.env, (_stdout, stderr) =>
+      stderr.includes("[daemon] Starting in HTTP daemon mode"),
+    );
+    assert.doesNotMatch(daemon.stderr, /"error":\{"code":"INVALID_ARGS"/);
+
+    const port = await getAvailablePort();
+    const explicitPort = await observeRunningEntrypoint(["--port", String(port), fixture.configPath], fixture.env, (_stdout, stderr) =>
+      stderr.includes(`daemon ready on port ${port}`),
+    );
+    assert.match(explicitPort.stderr, /\[daemon\] Starting in HTTP daemon mode/);
+  } finally {
+    removeLegacyFixture(fixture);
+  }
+});
+
+test("built entrypoint keeps --discover dispatch reachable", async () => {
+  const fixture = createLegacyFixture();
+  try {
+    const result = await runEntrypoint(["--discover", fixture.configPath], fixture.env);
+    assert.equal(result.code, 0);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /\[discover\] Running catalog discovery/);
+    assert.match(result.stderr, /\[discover\] Catalog snapshots saved\. Exiting\./);
+  } finally {
+    removeLegacyFixture(fixture);
+  }
+});
+
+test("built entrypoint keeps every skill-migration dispatch reachable", async () => {
+  const modes = [
+    { flag: "--defer-codex-skills", directory: join(".codex", "skills"), message: "Would rename" },
+    { flag: "--restore-codex-skills", directory: join(".codex", "skills.deferred"), message: "Would restore" },
+    { flag: "--defer-agents-skills", directory: join(".agents", "skills"), message: "Would rename" },
+    { flag: "--restore-agents-skills", directory: join(".agents", "skills.deferred"), message: "Would restore" },
+  ];
+
+  for (const mode of modes) {
+    const fixture = createLegacyFixture();
+    try {
+      mkdirSync(join(fixture.home, mode.directory), { recursive: true });
+      const result = await runEntrypoint([mode.flag, "--dry-run"], fixture.env);
+      assert.equal(result.code, 0, mode.flag);
+      assert.equal(result.stderr, "", mode.flag);
+      const payload = JSON.parse(result.stdout) as { changed: boolean; message: string };
+      assert.equal(payload.changed, false, mode.flag);
+      assert.match(payload.message, new RegExp(`^${mode.message} `), mode.flag);
+    } finally {
+      removeLegacyFixture(fixture);
+    }
   }
 });
