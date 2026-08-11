@@ -72,3 +72,32 @@ After repair: rerun build, full tests, skill validation, clean package inspectio
 - Preserved behavior remains green: initial health short-circuit, systemd before one detached fallback, 100 ms/remaining-budget polling, false at deadline, and one gateway retry only after `DAEMON_UNAVAILABLE`.
 - Fresh verification: build PASS; full suite 117/117; skill valid; clean-source package/extracted smoke PASS; dry-run package 137 files/0 required missing; manual all-six built mapping PASS; legacy/error/security tests PASS; diff check PASS.
 - State reset for re-review: all tasks implemented; goal implementation checked; spec review unchecked; code quality and integration unchecked.
+
+---
+
+## Rerun 6 Repair Required — 2026-08-11 14:15 CEST
+
+### Reap timed-out default systemd child processes
+
+- `src/cli/daemon-startup.ts:76-95`: abort sends `SIGTERM` then resolves immediately. A child that ignores `SIGTERM` remains alive with open `execFile` handles and can keep the CLI process alive beyond the five-second recovery deadline.
+- Independent real-child reproduction replaced `systemctl` through an isolated `PATH` fixture with a process that recorded its PID and ignored `SIGTERM`. The dependency settled false, but after 80 ms PID `547644` remained alive. Reviewer force-killed only that PID and removed the fixture.
+- Injected never-settling systemd coverage is insufficient because it owns no OS child. Built hanging-health coverage never reaches systemd because health consumes the deadline.
+
+### Required repair and acceptance
+
+- On abort, terminate the default `systemctl` process and confirm `exit`/`close`; if it ignores `SIGTERM`, escalate to `SIGKILL` within the same bounded cancellation path.
+- Do not resolve cleanup as complete while the child remains alive. Clear escalation timers and signal/child listeners, handle spawn/error/late-close races once, and leave no unhandled rejection or live stdio/process handle.
+- Add a real default-dependency or built-process regression using an isolated fake `systemctl` that ignores `SIGTERM` and records its PID. Prove the CLI returns the stable exit-3 envelope within a bounded window and `process.kill(pid, 0)` fails after completion. Ensure test cleanup kills any leaked exact PID on assertion failure.
+- Preserve health abort behavior, one absolute recovery deadline, initial-health short-circuit, systemd-first ordering, one detached fallback, 100 ms maximum polling sleeps, and exactly one gateway retry after `DAEMON_UNAVAILABLE` only.
+- Rerun build, full suite, skill validation, clean pack/extracted smoke, all-six built mapping, all legacy paths, security/error/recovery checks, and diff checks. Then reset spec review to `unchecked`, keep quality/integration `unchecked`, and rerun plan-scoped spec review.
+
+---
+
+## Rerun 6 Implementation Repair Resolved — 2026-08-11 14:22 CEST
+
+- Default systemd startup now uses ignored stdio and waits for child `close`; pre-spawn `error` is the only non-close settlement path.
+- Deadline abort sends `SIGTERM`, then escalates to `SIGKILL` after a bounded 100 ms grace period when the child does not close. Unified cleanup clears the timer and abort/child listeners, and guards all races against double settlement.
+- Real built-process regression uses an isolated `PATH` fake `systemctl`, records its exact PID, ignores `SIGTERM`, and always force-cleans only that PID on failure.
+- Fresh evidence: CLI returned stable exit `3` in 5.306 seconds; recorded PID `553088` was absent at completion. Focused CLI/daemon/runner tests passed 28/28.
+- Fresh verification: build PASS; full suite 118/118; skill validation PASS; clean package/extracted smoke PASS within the full suite; dry-run package 137 files/0 required missing; legacy, all-six mapping, security/error/recovery tests PASS; diff check PASS.
+- State reset for re-review: all tasks implemented; goal implementation checked; spec review unchecked; code quality and integration unchecked.

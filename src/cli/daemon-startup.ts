@@ -1,7 +1,8 @@
-import { execFile, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 
 const POLL_INTERVAL_MS = 100;
 const DEFAULT_TIMEOUT_MS = 5000;
+const SYSTEMD_KILL_GRACE_MS = 100;
 const SYSTEMD_SERVICE = "goldeneye-mcp-proxy.service";
 
 export interface DaemonStartupDeps {
@@ -75,21 +76,37 @@ export function createDefaultDaemonStartupDeps(): DaemonStartupDeps {
     },
     startSystemd: (_timeoutMs, signal) => new Promise<boolean>((resolve) => {
       let settled = false;
+      let aborting = false;
+      let escalationTimer: NodeJS.Timeout | undefined;
+      const child = spawn(
+        "systemctl",
+        ["--user", "start", SYSTEMD_SERVICE],
+        { stdio: "ignore" },
+      );
+      const cleanup = () => {
+        signal.removeEventListener("abort", abort);
+        child.removeListener("error", onError);
+        child.removeListener("close", onClose);
+        if (escalationTimer) clearTimeout(escalationTimer);
+      };
       const finish = (value: boolean) => {
         if (settled) return;
         settled = true;
-        signal.removeEventListener("abort", abort);
+        cleanup();
         resolve(value);
       };
-      const child = execFile(
-        "systemctl",
-        ["--user", "start", SYSTEMD_SERVICE],
-        error => finish(!error),
-      );
+      const onError = () => finish(false);
+      const onClose = (code: number | null) => finish(!aborting && code === 0);
       const abort = () => {
+        if (settled || aborting) return;
+        aborting = true;
         child.kill("SIGTERM");
-        finish(false);
+        escalationTimer = setTimeout(() => {
+          if (!settled) child.kill("SIGKILL");
+        }, SYSTEMD_KILL_GRACE_MS);
       };
+      child.once("error", onError);
+      child.once("close", onClose);
       signal.addEventListener("abort", abort, { once: true });
       if (signal.aborted) abort();
     }),

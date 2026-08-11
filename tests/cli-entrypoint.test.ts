@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -39,6 +39,29 @@ function runEntrypoint(args: string[], env: NodeJS.ProcessEnv = process.env): Pr
       });
     });
   });
+}
+
+function processExists(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
+async function waitForRecordedPid(pidPath: string, timeoutMs = 2_000): Promise<number> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      const pid = Number.parseInt(readFileSync(pidPath, "utf8"), 10);
+      if (Number.isSafeInteger(pid) && pid > 0) return pid;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  throw new Error("Fake systemctl did not record its PID");
 }
 
 function createLegacyFixture(): LegacyFixture {
@@ -204,6 +227,59 @@ test("built entrypoint bounds a health endpoint that accepts but never responds"
     assert.ok(elapsedMs < 7_500, `recovery exceeded its bounded window: ${elapsedMs}ms`);
   } finally {
     await server.close();
+  }
+});
+
+test("built entrypoint reaps a timed-out systemctl child that ignores SIGTERM", async (t) => {
+  const fixture = mkdtempSync(join(tmpdir(), "goldeneye-cli-systemctl-"));
+  const systemctlPath = join(fixture, "systemctl");
+  const pidPath = join(fixture, "pid");
+  const port = await getAvailablePort();
+  let recordedPid: number | undefined;
+
+  writeFileSync(systemctlPath, `#!${process.execPath}\nconst { writeFileSync } = require("node:fs");\nwriteFileSync(process.env.FAKE_SYSTEMCTL_PID_PATH, String(process.pid));\nprocess.on("SIGTERM", () => {});\nsetInterval(() => {}, 1000);\n`, "utf8");
+  chmodSync(systemctlPath, 0o755);
+
+  const startedAt = Date.now();
+  try {
+    const resultPromise = runEntrypoint(
+      ["search", "database", "--url", `http://127.0.0.1:${port}/mcp`],
+      {
+        ...process.env,
+        PATH: `${fixture}:${process.env.PATH ?? ""}`,
+        FAKE_SYSTEMCTL_PID_PATH: pidPath,
+      },
+    );
+    recordedPid = await waitForRecordedPid(pidPath);
+    const result = await resultPromise;
+
+    assert.deepEqual(result, {
+      code: 3,
+      stdout: "",
+      stderr: '{"error":{"code":"DAEMON_UNAVAILABLE","message":"Gateway daemon is unavailable"}}\n',
+    });
+    const elapsedMs = Date.now() - startedAt;
+    assert.ok(elapsedMs >= 4_500, `recovery returned too early after ${elapsedMs}ms`);
+    assert.ok(elapsedMs < 7_500, `recovery exceeded its bounded cleanup window: ${elapsedMs}ms`);
+    assert.equal(processExists(recordedPid), false, `systemctl PID ${recordedPid} still exists`);
+    t.diagnostic(`elapsed=${elapsedMs}ms systemctlPid=${recordedPid} aliveAfterCli=false`);
+  } finally {
+    if (recordedPid === undefined) {
+      try {
+        const pid = Number.parseInt(readFileSync(pidPath, "utf8"), 10);
+        if (Number.isSafeInteger(pid) && pid > 0) recordedPid = pid;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      }
+    }
+    if (recordedPid !== undefined && processExists(recordedPid)) {
+      try {
+        process.kill(recordedPid, "SIGKILL");
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+      }
+    }
+    rmSync(fixture, { recursive: true, force: true });
   }
 });
 

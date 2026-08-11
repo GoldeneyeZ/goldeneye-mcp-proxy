@@ -126,3 +126,32 @@ Files above are starting points only. Inspect any additional files needed to com
 
 - Implementation commit: `e6cc6d8` (`fix(cli): bound daemon recovery operations`).
 - Generated `dist` changes and unrelated worktree files remain excluded from the commit.
+
+## Timed-Out Systemd Child Reaping Repair
+
+### Files Changed
+
+- `src/cli/daemon-startup.ts`
+- `tests/cli-entrypoint.test.ts`
+
+### TDD Evidence
+
+- RED: a built CLI using an isolated fake `systemctl` that recorded its PID and ignored `SIGTERM` reached the 10-second process guard. The stable error envelope was written, but the live child kept the CLI process open; the fixture force-killed only the recorded PID.
+- GREEN: the same real-child regression returned exit `3` with empty stdout and the compact `DAEMON_UNAVAILABLE` stderr envelope in 5.306 seconds. Recorded PID `553088` no longer existed when the CLI completed.
+- The regression finalizer re-reads the exact recorded PID when needed and sends `SIGKILL` only to that PID if an assertion or process failure leaks it.
+
+### Implementation
+
+- Default systemd startup now uses ignored stdio and settles success/failure only on child `close`, or on a pre-spawn `error`.
+- Deadline abort sends `SIGTERM`; a 100 ms grace timer escalates an unclosed child to `SIGKILL`.
+- One settlement path clears the escalation timer, abort listener, and child `error`/`close` listeners. Aborted closure cannot report success; spawn-error and close races cannot settle twice.
+- Existing absolute deadline, abortable health probe, startup order, single fallback, polling bound, and runner retry behavior are unchanged.
+
+### Verification
+
+- Focused CLI/daemon/runner suites — PASS, 28/28; reaping regression 5.321 seconds.
+- `npm run build` — PASS.
+- `npm test` — PASS, 118/118, including package/extracted smoke, all six command mappings, legacy modes, and security/error/recovery coverage.
+- `quick_validate.py skills/using-goldeneye-cli` — `Skill is valid!`.
+- `npm pack --dry-run --json --silent` — PASS, 137 files and no required CLI/skill artifact missing.
+- `git diff --check` — PASS.
